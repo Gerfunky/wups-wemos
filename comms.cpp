@@ -3,7 +3,7 @@
 // 
 #ifdef BLAHBLAH
 #include "comms.h"
-#include "leds.h"
+//#include "leds.h"
 
 #ifdef _MSC_VER
 	#include <CmdMessenger\CmdMessenger.h>/ CmdMessenger

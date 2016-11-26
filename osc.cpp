@@ -114,7 +114,7 @@ extern void comms_S_FPS(uint8_t fps);
 
 
 // from relay
-void relay_set(uint8_t relay_nr, bool state);
+//void relay_set(uint8_t relay_nr, bool state);
 
 QueueArray <char> osc_out_float_addr;
 QueueArray <float> osc_out_float_value;
@@ -1538,7 +1538,7 @@ void osc_relay_routing(OSCMessage &msg, int addrOffset)
 	
 	relay_nr_string = relay_nr_string + address[0];
 	relay_nr = relay_nr_string.toInt();
-	relay_set(relay_nr, bool(msg.getFloat(0)));
+	//relay_set(relay_nr, bool(msg.getFloat(0)));
 	
 
 

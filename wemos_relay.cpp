@@ -4,7 +4,7 @@
 
 #include "wemos_relay.h"
 
-
+#ifdef RELAY_BOARD
 
 relay_cfg_struct relay[NR_OF_RELAYS] = {
 		{ DEF_RELAY_PIN_0  , false},
@@ -48,4 +48,4 @@ void relay_set_all(boolean state)
 
 }
 
-
+#endif
