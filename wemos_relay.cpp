@@ -30,8 +30,11 @@ void relay_setup()
 
 void relay_set(uint8_t relay_nr, bool state)
 {
-	relay[relay_nr].state = state;
-	digitalWrite(relay[relay_nr].pin, relay[relay_nr].state);
+	if (relay_nr < NR_OF_RELAYS && relay_nr >= 0)
+	{
+		relay[relay_nr].state = state;
+		digitalWrite(relay[relay_nr].pin, relay[relay_nr].state);
+	}
 
 }
 

@@ -82,7 +82,7 @@ void loop()
 
 	wifi_loop();
 	
-	if (millis() >= update_time )
+	/*if (millis() >= update_time )
 	{
 		rel_state = !rel_state;
 		update_time = millis() + 1000;
@@ -93,8 +93,8 @@ void loop()
 		//Serial.println("Doit Baby");
 		//Serial.println(rel_state);
 
-
-	}
+		
+	}  */
 	
 	
 }

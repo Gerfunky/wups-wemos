@@ -1,5 +1,5 @@
 // osc.h
-#ifdef BLAHBLAH
+#ifndef BLAHBLAH
 #ifndef _OSC_h
 #define _OSC_h
 

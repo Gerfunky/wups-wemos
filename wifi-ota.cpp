@@ -49,11 +49,6 @@ RemoteDebug TelnetDebug;
 // wifi
 wifi_Struct wifi_cfg;
 
-// Artnet
-#ifndef ARTNET_DISABLED
-Artnet artnet;		// make the Artnet server
-#endif
-artnet_struct artnet_cfg = { DEF_ARTNET_STAT_UNIVERSE, DEF_ARTNET_NUMBER_OF_UNIVERSES };
 
 
 // ntp
@@ -82,8 +77,8 @@ extern void httpd_setup();
 extern void http_loop();
 
 // from osc.cpp
-//extern void OSC_setup();
-//extern void OSC_loop();
+extern void OSC_setup();
+extern void OSC_loop();
 
 // from leds
 //extern void LEDS_artnet_in(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data);
@@ -675,7 +670,7 @@ void wifi_setup()
 
 	debugMe("Hello World");
 
-
+	OSC_setup();
 	
 	
 	httpd_setup();
@@ -692,6 +687,8 @@ void wifi_loop()
 	ArduinoOTA.handle();	// Run the main OTA loop for Wifi updating
 	yield();
 	NTP_parse_response();	// get new packets and flush if not correct.
+	yield();
+	OSC_loop();
 	yield();
 	http_loop();;
 	yield();
