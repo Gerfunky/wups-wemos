@@ -49,7 +49,7 @@ RemoteDebug TelnetDebug;
 // wifi
 wifi_Struct wifi_cfg;
 
-wifi_automation wifi_auto = {WIFI_IP_MASTER}
+wifi_automation wifi_auto = { WIFI_IP_MASTER };
 
 
 // ntp
@@ -489,7 +489,7 @@ void wifi_automation_Setup()
 	// setup the wifi for automation
 
 	//FFT_setup_vars();
-	if (get_bool(AUTOMAT_MASTER) == true) {};
+	if (get_bool(AUTOMAT_MASTER) == true) { ; }
 	else
 	{ 
 	};
@@ -510,7 +510,7 @@ void WIFI_automation_master_handle_sensors_in()
 				uint8_t sensor_nr = wifi_auto_server.read();
 				uint8_t temp = wifi_auto_server.read();
 				uint8_t humidity = wifi_auto_server.read();
-				DHT_recive_wifi_sensor_value(sensor_nr, temp, humidity);
+				//DHT_recive_wifi_sensor_value(sensor_nr, temp, humidity);
 			break;
 
 

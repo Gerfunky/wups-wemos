@@ -4,18 +4,21 @@
 
 #include "wemos_relay.h"
 
-#ifdef RELAY_BOARD
+#ifndef RELAY_BOARD
 
 relay_cfg_struct relay[NR_OF_RELAYS] = {
-		{ DEF_RELAY_PIN_0  , false},
-		{ DEF_RELAY_PIN_1  , false},
+		{ DEF_RELAY_PIN_0  , false}
+
+};
+/*
+		,{ DEF_RELAY_PIN_1  , false},
 		{ DEF_RELAY_PIN_2  , false},
 		{ DEF_RELAY_PIN_3  , false},
 		{ DEF_RELAY_PIN_4  , false},
 		{ DEF_RELAY_PIN_5  , false},
 		{ DEF_RELAY_PIN_6  , false},
 		{ DEF_RELAY_PIN_7  , false}
-		};
+		};  */
 
 
 void relay_setup()

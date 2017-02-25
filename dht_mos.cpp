@@ -3,6 +3,7 @@
 // 
 
 #include "dht_mos.h"
+#include "wemos_relay.h" // for relay checking
 
 #ifdef _MSC_VER  
 	#include <DHT\DHT.h>
@@ -19,10 +20,18 @@
 
 #define DHT_NR_SLAVES 2
 
-dht_sensor_strucht dht_sensor[DHT_NR_SLAVES] = {{ false ,0,0,DHT_0_TYPE }, { false ,0,0,DHT_0_TYPE }};
+#define DHT_DEF_MINTEMP 5
+#define DHT_RELAY_NO 0
+#define DHT_DEF_HUM_DIFF 10
+#define DHT_DEF_MIN_HUMID 60
+
+dht_sensor_strucht dht_sensor[DHT_NR_SENSORS] = { { false ,0,0,DHT_0_TYPE,DHT_DEF_MINTEMP, DHT_RELAY_NO,DHT_DEF_HUM_DIFF, DHT_DEF_MIN_HUMID } }; // , { false ,0,0,DHT_0_TYPE } };
 
 DHT dht(DHT_0_PIN, DHT_0_TYPE);
 
+// External
+extern relay_cfg_struct relay[NR_OF_RELAYS];
+extern void relay_set(uint8_t relay_nr, bool state);
 
 /// running average
 #define DHT_NR_STAGE0_SAMPLES 10					// How many samples to take for the FFT average = Stage 1
@@ -46,36 +55,68 @@ void DHT_recive_wifi_sensor_value(uint8_t sensor_nr, uint8_t temp, uint8_t humid
 	dht_sensor[sensor_nr].temp = float(humidity);
 	dht_sensor[sensor_nr].readOk = true;
 
-	dht_temp_master_stage0[sensor_nr].addValue(dht_sensor[sensor_nr].temp);
-	dht_humidity_master_stage0[sensor_nr].addValue(dht_sensor[sensor_nr].humidity);
+	//dht_temp_master_stage0[sensor_nr].addValue(dht_sensor[sensor_nr].temp);
+	//dht_humidity_master_stage0[sensor_nr].addValue(dht_sensor[sensor_nr].humidity);
 }
 
 
-void dht_get_sensor_value()
+void dht_get_sensor_value(uint8_t sensorNR = 0)
 {
-	dht_sensor[0].temp = dht.readTemperature();
-	dht_sensor[0].humidity = dht.readHumidity();
+	dht_sensor[sensorNR].temp  = dht.readTemperature();
+	dht_sensor[sensorNR].humidity = dht.readHumidity();
 	
 
-	if (isnan(dht_sensor[0].humidity) || isnan(dht_sensor[0].temp))	// check if sensor reading is ok if not do ...	
+	if (isnan(dht_sensor[sensorNR].humidity) || isnan(dht_sensor[sensorNR].temp))	// check if sensor reading is ok if not do ...	
 	{
-		dht_sensor[0].readOk = false;
+		dht_sensor[sensorNR].readOk = false;
 		debugMe("Failed to read from DHT sensor!");
 	}
 	else				// sensor reading ok
 	{
-		dht_sensor[0].readOk = true;
-		Serial.println(dht_sensor[0].temp);
-		Serial.println(dht_sensor[0].humidity);
+		dht_sensor[sensorNR].readOk = true;
+		Serial.println(dht_sensor[sensorNR].temp);
+		Serial.println(dht_sensor[sensorNR].humidity);
 
-		dht_temp_stage0.addValue(dht_sensor[0].temp);
-		dht_humidity_stage0.addValue(dht_sensor[0].humidity);
+		dht_temp_stage0.addValue(dht_sensor[sensorNR].temp);
+		dht_humidity_stage0.addValue(dht_sensor[sensorNR].humidity);
 
 		debugMe("avg_temp ", false);
 		debugMe(float(dht_temp_stage0.getAverage()), true);
 		debugMe("avg_humidity ", false);
 		debugMe(float(dht_humidity_stage0.getAverage()), true);
 	}
+
+}
+
+
+
+void dht_process_values(uint8_t sensorNR = 0)
+{
+	if (dht_sensor[sensorNR].readOk == true)
+	{
+		if (relay[dht_sensor[sensorNR].relay_no].state == true)  // relay is on 
+		{
+			// check the temp and humidity and switch off if below temp or humidity
+			if ((dht_sensor[sensorNR].temp <= dht_sensor[sensorNR].mintemp - 1) || dht_sensor[sensorNR].humidity < (dht_sensor[sensorNR].minHumid - dht_sensor[sensorNR].HumiDiff))
+			{
+				relay_set(dht_sensor[sensorNR].relay_no, false);
+			}
+		}
+		else if (relay[dht_sensor[sensorNR].relay_no].state == false)  // relay is on 
+		{	
+			// if the relay is off check temp and humidity and power on ir required
+			if ((dht_sensor[sensorNR].temp >= dht_sensor[sensorNR].mintemp) || dht_sensor[sensorNR].humidity >= dht_sensor[sensorNR].minHumid)
+			{
+				relay_set(dht_sensor[sensorNR].relay_no, true);
+			}
+		}
+	}
+	else
+	{
+		// check how ofter false reading send out a msg to inform on x failure of readings.
+		;
+	}
+
 
 }
 
@@ -97,6 +138,8 @@ void dht_run()
 {
 
 	dht_get_sensor_value();
+	dht_process_values();
+
 
 }
 

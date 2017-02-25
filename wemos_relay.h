@@ -3,7 +3,7 @@
 #ifndef _WEMOS_RELAY_h
 #define _WEMOS_RELAY_h
 
-#ifdef RELAY_BOARD
+#ifndef RELAY_BOARD
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -14,9 +14,9 @@
 
 
 
-#define NR_OF_RELAYS 8
-#define DEF_RELAY_PIN_0 D0	//wemos 0
-#define DEF_RELAY_PIN_1 D1	// 1
+#define NR_OF_RELAYS 1
+#define DEF_RELAY_PIN_0 D1	//wemos 0
+#define DEF_RELAY_PIN_1 D0	// 1 ONBORAD RELAY D1
 #define DEF_RELAY_PIN_2 D2	// 2...
 #define DEF_RELAY_PIN_3 D3
 							// D4 for direct sensor
