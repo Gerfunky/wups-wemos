@@ -30,7 +30,7 @@ enum GLOBAL_OPTIONS_ENUM
 	,HTTP_ENABLED		= 4		// enable the HTTP server
 	,ARTNET_ENABLE		= 5		// Artnet mode?
 	,OSC_EDIT			= 6		// alow Edditing of NR LEds and Start Led ?
-	,FFT_MASTER			= 7		// Master FFT-Server ? if not = slave!
+	,AUTOMAT_MASTER		= 7		// Master FFT-Server ? if not = slave!
 	,FFT_ENABLE			= 8		// FFT enabled
 	,BLEND_INVERT		= 9		// invert all blend modes!
 	,OSC_MC_SEND		= 10	// send OSC to slave OSC devices ?

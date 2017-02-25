@@ -50,7 +50,7 @@
 	//extern void load_bool();
 
 	//extern artnet_struct artnet_cfg;
-	extern fft_ip_cfg_struct fft_ip_cfg;
+	//extern fft_ip_cfg_struct fft_ip_cfg;
 
 /*	// from leds.cpp
 	extern Strip_FL_Struct part[NR_STRIPS];

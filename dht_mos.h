@@ -11,7 +11,7 @@
 
 struct dht_sensor_strucht
 {
-	uint8_t pin;
+	bool	readOk;
 	float   temp;
 	float	humidity;
 	uint8_t type;		// 0 = DHT 22 ; 1 = DHT 11
