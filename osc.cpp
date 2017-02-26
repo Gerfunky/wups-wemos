@@ -58,7 +58,7 @@ extern float byte_tofloat(uint8_t value, uint8_t max_value = 255);
 extern void FS_wifi_write(uint8_t conf_nr);
 extern void FS_Bools_write(uint8_t conf_nr);
 extern void FS_osc_delete_all_saves();
-
+extern void	FS_dht_write(uint8_t conf_nr);
 /*extern void FS_artnet_write(uint8_t conf_nr);
 extern boolean FS_play_conf_read(uint8_t conf_nr);
 extern void FS_play_conf_write(uint8_t conf_nr);
@@ -1497,7 +1497,7 @@ void osc_device_settings_routing(OSCMessage &msg, int addrOffset)
 
 
 	if (msg.fullMatch("/IPSAVE", addrOffset) && bool(msg.getFloat(0)) == true) 		{FS_wifi_write(0); osc_send_MSG_String("/DS/INFO", String("IP saved")); }
-	if (msg.fullMatch("/BSAVE", addrOffset) && bool(msg.getFloat(0)) == true) 		{FS_Bools_write(0); osc_send_MSG_String("/DS/INFO", String("Settings saved")); }
+	if (msg.fullMatch("/BSAVE", addrOffset) && bool(msg.getFloat(0)) == true) { FS_Bools_write(0); osc_send_MSG_String("/DS/INFO", String("Settings saved"));	FS_dht_write(0); }
 	if (msg.fullMatch("/RSSI", addrOffset) && bool(msg.getFloat(0)) == true)		osc_queu_MSG_float("/DS/RSSIL", float(WiFi.RSSI()));
 
 

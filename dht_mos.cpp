@@ -14,24 +14,15 @@
 #endif
 
 
-#define DHT_NR_SENSORS 1
-#define DHT_0_PIN D4
-#define DHT_0_TYPE DHT11
+dht_sensor_strucht dht_sensor[DHT_NR_SENSORS] = { { false ,0,0,DHT_0_TYPE,DHT_0_PIN ,  DHT_RELAY_NO,DHT_DEF_MINTEMP,DHT_DEF_HUM_DIFF, DHT_DEF_MIN_HUMID,DHT_DEF_TEMP_DIFF } }; // , { false ,0,0,DHT_0_TYPE } };
 
-#define DHT_NR_SLAVES 2
-
-#define DHT_DEF_MINTEMP 5
-#define DHT_RELAY_NO 0
-#define DHT_DEF_HUM_DIFF 10
-#define DHT_DEF_MIN_HUMID 60
-
-dht_sensor_strucht dht_sensor[DHT_NR_SENSORS] = { { false ,0,0,DHT_0_TYPE,DHT_DEF_MINTEMP, DHT_RELAY_NO,DHT_DEF_HUM_DIFF, DHT_DEF_MIN_HUMID } }; // , { false ,0,0,DHT_0_TYPE } };
-
-DHT dht(DHT_0_PIN, DHT_0_TYPE);
+//DHT dht(DHT_0_PIN, DHT_0_TYPE);
+DHT *myDHT[DHT_NR_SENSORS];
 
 // External
 extern relay_cfg_struct relay[NR_OF_RELAYS];
 extern void relay_set(uint8_t relay_nr, bool state);
+extern boolean FS_dht_read(uint8_t conf_nr = 0);
 
 /// running average
 #define DHT_NR_STAGE0_SAMPLES 10					// How many samples to take for the FFT average = Stage 1
@@ -62,8 +53,14 @@ void DHT_recive_wifi_sensor_value(uint8_t sensor_nr, uint8_t temp, uint8_t humid
 
 void dht_get_sensor_value(uint8_t sensorNR = 0)
 {
-	dht_sensor[sensorNR].temp  = dht.readTemperature();
-	dht_sensor[sensorNR].humidity = dht.readHumidity();
+	/*debugMe("humid ", false);
+	debugMe(myDHT[0]->readHumidity(), true);
+	debugMe("temp ", false);
+	debugMe(myDHT[0]->readTemperature(), true);
+	*/
+
+	dht_sensor[sensorNR].temp  = myDHT[0]->readTemperature()  ;
+	dht_sensor[sensorNR].humidity = myDHT[0]->readHumidity();
 	
 
 	if (isnan(dht_sensor[sensorNR].humidity) || isnan(dht_sensor[sensorNR].temp))	// check if sensor reading is ok if not do ...	
@@ -74,8 +71,8 @@ void dht_get_sensor_value(uint8_t sensorNR = 0)
 	else				// sensor reading ok
 	{
 		dht_sensor[sensorNR].readOk = true;
-		Serial.println(dht_sensor[sensorNR].temp);
-		Serial.println(dht_sensor[sensorNR].humidity);
+		debugMe(dht_sensor[sensorNR].temp);
+		debugMe(dht_sensor[sensorNR].humidity);
 
 		dht_temp_stage0.addValue(dht_sensor[sensorNR].temp);
 		dht_humidity_stage0.addValue(dht_sensor[sensorNR].humidity);
@@ -99,6 +96,7 @@ void dht_process_values(uint8_t sensorNR = 0)
 			// check the temp and humidity and switch off if below temp or humidity
 			if ((dht_sensor[sensorNR].temp <= dht_sensor[sensorNR].mintemp - 1) || dht_sensor[sensorNR].humidity < (dht_sensor[sensorNR].minHumid - dht_sensor[sensorNR].HumiDiff))
 			{
+
 				relay_set(dht_sensor[sensorNR].relay_no, false);
 			}
 		}
@@ -123,7 +121,12 @@ void dht_process_values(uint8_t sensorNR = 0)
 
 void dht_setup() 
 {
-	dht.begin();
+	//dht.begin();
+	FS_dht_read(0);
+
+	myDHT[0] = new DHT(dht_sensor[0].pin, dht_sensor[0].type);
+
+
 	/*
 	for (uint8_t i = 0; i < DHT_NR_SENSORS; i++)
 	{
