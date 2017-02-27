@@ -24,7 +24,7 @@
 
 #include "wifi-ota.h"    // needs Wifi and co for data stuctures!!!
 
-#include "leds.h"			// include for led data structures
+//#include "leds.h"			// include for led data structures
 #include "tools.h"			// include the Tools for reading and writing bools
 
 
@@ -49,6 +49,7 @@ RemoteDebug TelnetDebug;
 // wifi
 wifi_Struct wifi_cfg;
 
+wifi_automation wifi_auto = { WIFI_IP_MASTER };
 
 
 // ntp
@@ -59,8 +60,8 @@ WiFiUDP ntp_udp;
 
 
 // FFT data 
-WiFiUDP  FFT_master;
-WiFiUDP  FFT_slave;
+WiFiUDP  wifi_auto_server;
+//WiFiUDP  FFT_slave;
 
 //fft_ip_cfg_struct fft_ip_cfg;
 
@@ -80,13 +81,6 @@ extern void http_loop();
 extern void OSC_setup();
 extern void OSC_loop();
 
-// from leds
-//extern void LEDS_artnet_in(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data);
-//extern void LEDS_fadeout();
-//extern void LEDS_FFT_enqueue(uint8_t invalue);
-//extern uint8_t LEDS_FFT_get_value(uint8_t bit);
-
-//extern fft_led_cfg_struct fft_led_cfg;
 
 
 //debugging
@@ -489,6 +483,48 @@ void setup_wifi_Network()
 }
 
 
+
+void wifi_automation_Setup()
+{
+	// setup the wifi for automation
+
+	//FFT_setup_vars();
+	if (get_bool(AUTOMAT_MASTER) == true) { ; }
+	else
+	{ 
+	};
+
+}
+
+void WIFI_automation_master_handle_sensors_in()
+{
+	// the main function to handle incomming sensor packets over wifi
+	// recive the Multicast Packet from the Master FFT Sender and send it to the Leds or MC
+	if (get_bool(AUTOMAT_MASTER) == true)			// SLAVE mode
+	{
+		uint8_t packetSize = wifi_auto_server.parsePacket();
+
+		switch (packetSize)
+		{
+			case 3:				// DHT sensor Nr,Temp,Humidity
+				uint8_t sensor_nr = wifi_auto_server.read();
+				uint8_t temp = wifi_auto_server.read();
+				uint8_t humidity = wifi_auto_server.read();
+				//DHT_recive_wifi_sensor_value(sensor_nr, temp, humidity);
+			break;
+
+
+		}
+		wifi_auto_server.flush();						// flush out the open packet
+
+			
+													//packetSize = 0; // FFT_slave.parsePacket();		// get a new packet if available  
+	} // end while packetsize !=0
+	
+}
+
+
+
 #ifdef FFT_SERVER_ena
 void WIFI_FFT_enable() 
 {
@@ -629,14 +665,6 @@ void FFT_setup_vars()
 
 }
 
-void FFT_Setup()
-{
-	// setup the wifi FFT 
-	FFT_setup_vars();
-	if (get_bool(FFT_ENABLE)== true) WIFI_FFT_enable();
-
-
-}
 
 void FFT_handle_loop()
 {

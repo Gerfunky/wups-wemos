@@ -5,8 +5,13 @@
 
 */
 
+#include "dht_mos.h"
 #include "wemos_relay.h"
 #include "Header.h"				// add the main Header file
+
+
+//#define RELAY_BOARD
+#define UHT_SENSOR
 
 #define DEF_BOOT_DEBUGING  true  // Set to true to get DEbuging info on serial port during boot. else set to false  TODO put this in epprom
 #define DEF_SERIAL_SPEED 57600   // teensy - ESP8266 working on 57600
@@ -34,6 +39,11 @@
 		extern void write_bool(uint8_t bit_nr, boolean value);
 
 
+		// from dht_mos.capp
+		extern uint16_t dht_get_sensor_timeout(uint8_t sensor_nr);
+
+
+
 		// from relay.cpp
 		extern void relay_setup();
 		extern void relay_set(uint8_t relay_nr, bool state);
@@ -41,8 +51,9 @@
 
 		unsigned long update_time = 0;
 
-
-
+		// from dht
+		extern void dht_run();
+		extern void dht_setup();
  
 void setup()
 {
@@ -66,35 +77,37 @@ void setup()
 
 	wifi_setup();
 
-
+#ifdef RELAY_BOARD
 	relay_setup();
-
+#endif
+	dht_setup();
 	//setup_comms(DEF_BOOT_DEBUGING, DEF_SERIAL_SPEED);   // Start CMDmessanger and the Serial if DEF_BOOT_DEBUGING == false
 	debugMe("DONE Setup");
 
 
 }
 
-bool rel_state = true;
+//bool rel_state = true;
 
 void loop() 
 {
 
 	wifi_loop();
 	
-	/*if (millis() >= update_time )
+	if (millis() >= update_time )
 	{
-		rel_state = !rel_state;
-		update_time = millis() + 1000;
 		
-		relay_set_all( rel_state);
+		update_time = millis() +  (dht_get_sensor_timeout(0) * 1000);
+		
+		dht_run();
+
 
 		//relay_set( 1, rel_state);
 		//Serial.println("Doit Baby");
 		//Serial.println(rel_state);
 
 		
-	}  */
+	}  
 	
 	
 }

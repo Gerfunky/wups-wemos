@@ -11,8 +11,11 @@
 	#include "WProgram.h"
 #endif
 
-#include "IPAddress.h"
+#ifdef _MSC_VER 
 
+#else
+	#include "IPAddress.h"
+#endif
 										// Wifi IP settings data stucture 
 	struct wifi_Struct 
 	{
@@ -26,6 +29,16 @@
 		IPAddress	ipNTP;				// What NTP server to use in IP 
 		char		ntp_fqdn[24];		// what NTP server to use in FQDN
 	};
+
+#define WIFI_IP_MASTER {172,16,222,39}	
+
+	struct wifi_automation
+	{									// Config structure to hold the  parameters
+		IPAddress	masterIP;			// Multicast IP address to send the  data to		
+		uint16_t	port_slave;			// Multicast DEST port for  packets
+		uint16_t	port_master;		// Multicast source port to send from
+	};
+
 
 																// DEFAULT setting if no config is loaded from the SPIFFS
 	#define DEF_AP_NAME			"TinyPixelMapper01"				// AP / Hostname
@@ -63,12 +76,7 @@
  #define DEF_FFT_MASTER			false					// set the node to Master mode?
 
 
- struct fft_ip_cfg_struct
- {									// Config structure to hold the FFT parameters
-	 IPAddress	IP_multi;			// Multicast IP address to send the FFT data to		
-	 uint16_t	port_slave;			// Multicast DEST port for FFT packets
-	 uint16_t	port_master;		// Multicast source port to send from
- };
+
 
 
 #endif

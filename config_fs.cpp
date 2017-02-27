@@ -12,6 +12,8 @@
 #include "wifi-ota.h"
 #include "tools.h"
 
+#include "IPAddress.h"
+
 #ifdef _MSC_VER
 	//#include "FS.h"
 	typedef File;
@@ -42,6 +44,11 @@
 	extern void debugMe(int input, boolean line = true);
 
 
+	//from DHT.mos.cpp
+#include "dht_mos.h"
+	extern dht_sensor_strucht dht_sensor[DHT_NR_SENSORS] ; // , { false ,0,0,DHT_0_TYPE } };
+
+
 
 // ***************** External Structures
 	// from wifi-ota.cpp
@@ -50,7 +57,7 @@
 	//extern void load_bool();
 
 	//extern artnet_struct artnet_cfg;
-	extern fft_ip_cfg_struct fft_ip_cfg;
+	//extern fft_ip_cfg_struct fft_ip_cfg;
 
 /*	// from leds.cpp
 	extern Strip_FL_Struct part[NR_STRIPS];
@@ -117,6 +124,37 @@ int	get_int_conf_value(File myFile, char *character)
 	else
 		return 0;
 }
+
+int	get_IP_conf_value(File myFile, char *character)
+{
+	// When reading from a file give back a INT value
+
+	//char character;
+	String settingName;
+	String settingValue;
+
+	if (*character != ']') {
+		*character = myFile.read();
+		while ((myFile.available()) && (*character != ':') && *character != '.' && *character != ']') {
+			settingValue = settingValue + *character;
+			*character = myFile.read();
+		}
+
+		if (settingValue != NULL)
+		{
+			int outval = settingValue.toInt();
+			yield();
+
+			return outval;
+		}
+		else {
+			return 0;
+		}
+	}
+	else
+		return 0;
+}
+
 
 bool	get_bool_conf_value(File myFile, char *character) 
 {
@@ -302,6 +340,100 @@ void FS_FFT_write(uint8_t conf_nr)
 */
 
 
+void	FS_dht_write(uint8_t conf_nr)
+{
+	// write out the wifi config
+	String addr = String("/conf/" + String(conf_nr) + ".dht.txt");
+	//String title = "Main Config for ESP.";
+	File conf_file = SPIFFS.open(addr, "w");
+
+	if (!conf_file)
+	{
+		debugMe("Cant write dht Conf file");
+	}
+	else  // it opens
+	{
+		conf_file.println("Main DHT Config for ESP.");
+		conf_file.println("D = DHT: type (11,22): pin (def=2): mintemp (3:40) : temp dif (1:40): min Humidity(10:90) : Himidity diff (0:50): Update every x Seconds (2:3600) : relayNo (0:7)");
+		conf_file.print(String("[D:" + String(dht_sensor[0].type)));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].pin,1,16))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].relay_no, 0, 7))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].mintemp, DHT_MINTEMP_MIN , DHT_MINTEMP_MAX))));		// Wifi
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].tempDiff, DHT_TEMPDIF_MIN, DHT_TEMPDIF_MAX))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].minHumid, DHT_MINHUMID_MIN, DHT_MINHUMID_MAX))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].HumiDiff, DHT_HUMDIDDIFF_MIN, DHT_HUMDIDDIFF_MAX))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].update_sec, DHT_UPDATESEC_MIN, DHT_UPDATESEC_MAX))));
+		
+
+		conf_file.println("] ");
+		conf_file.close();
+
+		debugMe("DHT wrote conf");
+	}	// end open conf file
+
+
+}
+
+boolean FS_dht_read(uint8_t conf_nr = 0)
+{
+	// read the dht config
+
+	String addr = String("/conf/" + String(conf_nr) + ".dht.txt");
+	File conf_file = SPIFFS.open(addr, "r");
+	delay(100);
+	if (conf_file)
+	{
+		debugMe("Loading dht conf " + addr);
+		char character;
+		//String settingName;
+		//String settingValue;
+		char type;
+
+
+		while (conf_file.available())
+		{
+			character = conf_file.read();
+
+			while ((conf_file.available()) && (character != '[')) {  // Go to first setting
+				character = conf_file.read();
+			}
+
+			type = conf_file.read();
+			character = conf_file.read(); // go past the first ":" after the type
+
+			if (type = 'D')
+			{
+				debugMe("DHT READ");
+				dht_sensor[0].type = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].pin = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].relay_no = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].mintemp = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].tempDiff = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].minHumid = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].HumiDiff = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].update_sec = get_int_conf_value(conf_file, &character);
+				
+
+				while ((conf_file.available()) && (character != ']')) character = conf_file.read();   // goto End				
+			}
+			//if (character == ']') {DBG_OUTPUT_PORT.println("the other side") ;}  // End of getting this strip
+			while ((conf_file.available())) character = conf_file.read();   // goto End
+
+		}
+		conf_file.close();
+		return true;
+	}	// end open conf file
+	else
+	{
+		//FS_dht_write(conf_nr);
+		debugMe("error opening " + addr);
+
+	}
+	return false;
+}
+
+
+
 // wifi
 void	FS_wifi_write(uint8_t conf_nr)
 {
@@ -326,24 +458,24 @@ void	FS_wifi_write(uint8_t conf_nr)
 		conf_file.print(String(":" + String(get_bool(STATIC_IP_ENABLED))));
 
 		conf_file.print(String(":" + String(wifi_cfg.ipStaticLocal[0])));
-		conf_file.print(String(":" + String(wifi_cfg.ipStaticLocal[1])));
-		conf_file.print(String(":" + String(wifi_cfg.ipStaticLocal[2])));
-		conf_file.print(String(":" + String(wifi_cfg.ipStaticLocal[3])));
+		conf_file.print(String("." + String(wifi_cfg.ipStaticLocal[1])));
+		conf_file.print(String("." + String(wifi_cfg.ipStaticLocal[2])));
+		conf_file.print(String("." + String(wifi_cfg.ipStaticLocal[3])));
 
 		conf_file.print(String(":" + String(wifi_cfg.ipSubnet[0])));
-		conf_file.print(String(":" + String(wifi_cfg.ipSubnet[1])));
-		conf_file.print(String(":" + String(wifi_cfg.ipSubnet[2])));
-		conf_file.print(String(":" + String(wifi_cfg.ipSubnet[3])));
+		conf_file.print(String("." + String(wifi_cfg.ipSubnet[1])));
+		conf_file.print(String("." + String(wifi_cfg.ipSubnet[2])));
+		conf_file.print(String("." + String(wifi_cfg.ipSubnet[3])));
 
 		conf_file.print(String(":" + String(wifi_cfg.ipDGW[0])));
-		conf_file.print(String(":" + String(wifi_cfg.ipDGW[1])));
-		conf_file.print(String(":" + String(wifi_cfg.ipDGW[2])));
-		conf_file.print(String(":" + String(wifi_cfg.ipDGW[3])));
+		conf_file.print(String("." + String(wifi_cfg.ipDGW[1])));
+		conf_file.print(String("." + String(wifi_cfg.ipDGW[2])));
+		conf_file.print(String("." + String(wifi_cfg.ipDGW[3])));
 
 		conf_file.print(String(":" + String(wifi_cfg.ipDNS[0])));
-		conf_file.print(String(":" + String(wifi_cfg.ipDNS[1])));
-		conf_file.print(String(":" + String(wifi_cfg.ipDNS[2])));
-		conf_file.print(String(":" + String(wifi_cfg.ipDNS[3])));
+		conf_file.print(String("." + String(wifi_cfg.ipDNS[1])));
+		conf_file.print(String("." + String(wifi_cfg.ipDNS[2])));
+		conf_file.print(String("." + String(wifi_cfg.ipDNS[3])));
 
 		conf_file.print(String(":" + String(wifi_cfg.ntp_fqdn)));
 
@@ -357,6 +489,10 @@ void	FS_wifi_write(uint8_t conf_nr)
 
 	
 }
+
+
+
+
 
 boolean FS_wifi_read(uint8_t conf_nr = 0)
 {
@@ -410,10 +546,10 @@ boolean FS_wifi_read(uint8_t conf_nr = 0)
 				settingValue.toCharArray(wifi_cfg.pwd, settingValue.length() + 1);
 
 				write_bool(STATIC_IP_ENABLED, get_bool_conf_value(conf_file, &character));
-				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipStaticLocal[i] = get_int_conf_value(conf_file, &character);
-				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipSubnet[i] = get_int_conf_value(conf_file, &character);
-				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipDGW[i] = get_int_conf_value(conf_file, &character);
-				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipDNS[i] = get_int_conf_value(conf_file, &character);
+				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipStaticLocal[i] = get_IP_conf_value(conf_file, &character);
+				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipSubnet[i] = get_IP_conf_value(conf_file, &character);
+				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipDGW[i] = get_IP_conf_value(conf_file, &character);
+				for (uint8_t i = 0; i < 4; i++) wifi_cfg.ipDNS[i] = get_IP_conf_value(conf_file, &character);
 			
 				settingValue = get_string_conf_value(conf_file, &character);
 				settingValue.toCharArray(wifi_cfg.ntp_fqdn, settingValue.length() + 1);

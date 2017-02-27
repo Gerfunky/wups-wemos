@@ -50,7 +50,7 @@
 extern boolean get_bool(uint8_t bit_nr);
 extern void write_bool(uint8_t bit_nr, boolean value);
 extern float byte_tofloat(uint8_t value, uint8_t max_value = 255);
-
+extern float mapfloat(float x, float in_min, float in_max, float out_min, float out_max);
 
 
 
@@ -58,6 +58,7 @@ extern float byte_tofloat(uint8_t value, uint8_t max_value = 255);
 extern void FS_wifi_write(uint8_t conf_nr);
 extern void FS_Bools_write(uint8_t conf_nr);
 extern void FS_osc_delete_all_saves();
+extern void	FS_dht_write(uint8_t conf_nr);
 
 /*extern void FS_artnet_write(uint8_t conf_nr);
 extern boolean FS_play_conf_read(uint8_t conf_nr);
@@ -84,6 +85,22 @@ extern boolean FS_FFT_read(uint8_t conf_nr);
 
 // from httpd
 extern void httpd_toggle_webserver();
+
+//from DHT.mos.cpp
+		#include "dht_mos.h"
+		extern dht_sensor_strucht dht_sensor[DHT_NR_SENSORS]; // , { false ,0,0,DHT_0_TYPE } };
+		extern float dht_get_temp_stage0_Min();
+		extern float dht_get_temp_stage0_Avg();
+		extern float dht_get_temp_stage0_Max();
+		extern float dht_get_humid_stage0_Max();
+		extern float dht_get_humid_stage0_Min();
+		extern float dht_get_humid_stage0_Avg();
+
+
+// from relay.cpp
+	#include "wemos_relay.h"
+		extern relay_cfg_struct relay[NR_OF_RELAYS];
+
 
 // from leds
 /*extern float LEDS_get_FPS();
@@ -114,7 +131,7 @@ extern void comms_S_FPS(uint8_t fps);
 
 
 // from relay
-void relay_set(uint8_t relay_nr, bool state);
+//void relay_set(uint8_t relay_nr, bool state);
 
 QueueArray <char> osc_out_float_addr;
 QueueArray <float> osc_out_float_value;
@@ -1497,7 +1514,7 @@ void osc_device_settings_routing(OSCMessage &msg, int addrOffset)
 
 
 	if (msg.fullMatch("/IPSAVE", addrOffset) && bool(msg.getFloat(0)) == true) 		{FS_wifi_write(0); osc_send_MSG_String("/DS/INFO", String("IP saved")); }
-	if (msg.fullMatch("/BSAVE", addrOffset) && bool(msg.getFloat(0)) == true) 		{FS_Bools_write(0); osc_send_MSG_String("/DS/INFO", String("Settings saved")); }
+	if (msg.fullMatch("/BSAVE", addrOffset) && bool(msg.getFloat(0)) == true) { FS_Bools_write(0); osc_send_MSG_String("/DS/INFO", String("Settings saved"));	FS_dht_write(0); }
 	if (msg.fullMatch("/RSSI", addrOffset) && bool(msg.getFloat(0)) == true)		osc_queu_MSG_float("/DS/RSSIL", float(WiFi.RSSI()));
 
 
@@ -1525,7 +1542,7 @@ void osc_device_settings_routing(OSCMessage &msg, int addrOffset)
 }
 
 
-
+// Relay
 void osc_relay_routing(OSCMessage &msg, int addrOffset)
 {
 	char address[3];
@@ -1538,11 +1555,160 @@ void osc_relay_routing(OSCMessage &msg, int addrOffset)
 	
 	relay_nr_string = relay_nr_string + address[0];
 	relay_nr = relay_nr_string.toInt();
-	relay_set(relay_nr, bool(msg.getFloat(0)));
+	//relay_set(relay_nr, bool(msg.getFloat(0)));
 	
 
 
 }
+
+
+// dht
+
+void osc_dht_refresh(uint8_t sensor_nr = 0)
+{
+	osc_send_out_float_MSG_buffer();  // send out some of it and yield
+	yield();
+
+	osc_queu_MSG_float(String("/dht/type"), float(dht_sensor[sensor_nr].type));
+	osc_queu_MSG_float(String("/dht/temp"), float(dht_sensor[sensor_nr].temp));
+	osc_queu_MSG_float(String("/dht/humid"), float(dht_sensor[sensor_nr].humidity));
+	osc_queu_MSG_float(String("/dht/relay"), float(dht_sensor[sensor_nr].relay_no));
+	osc_queu_MSG_float(String("/dht/relstate"), float(relay[dht_sensor[sensor_nr].relay_no].state));
+	osc_queu_MSG_float(String("/dht/errors"), float(dht_sensor[sensor_nr].totalErrors));
+
+	osc_queu_MSG_float(String("/dht/t_min"), float(dht_sensor[0].mintemp ));
+	osc_queu_MSG_float(String("/dht/h_min"), float(dht_sensor[0].minHumid ));
+	osc_queu_MSG_float(String("/dht/t_off"), float(dht_sensor[0].mintemp - dht_sensor[0].tempDiff));
+	osc_queu_MSG_float(String("/dht/h_off"), float(dht_sensor[0].minHumid - dht_sensor[0].HumiDiff));
+
+	osc_queu_MSG_float(String("/dht/update"), float(dht_sensor[sensor_nr].update_sec));
+
+	osc_queu_MSG_float(String("/dht/fader/mt"), mapfloat(float(dht_sensor[sensor_nr].mintemp), DHT_MINTEMP_MIN, DHT_MINTEMP_MAX, 0, 1));
+	osc_queu_MSG_float(String("/dht/fader/mh"), mapfloat(float(dht_sensor[sensor_nr].minHumid), DHT_MINHUMID_MIN, DHT_MINHUMID_MAX, 0 , 1));
+	osc_queu_MSG_float(String("/dht/fader/ot"), mapfloat(float(dht_sensor[sensor_nr].tempDiff), DHT_TEMPDIF_MIN, DHT_TEMPDIF_MAX, 0 , 1));
+	osc_queu_MSG_float(String("/dht/fader/oh"), mapfloat(float(dht_sensor[sensor_nr].HumiDiff), DHT_HUMDIDDIFF_MIN, DHT_HUMDIDDIFF_MAX , 0 , 1));
+	osc_queu_MSG_float(String("/dht/fader/up"), mapfloat(float(dht_sensor[sensor_nr].update_sec), DHT_UPDATESEC_MIN, DHT_UPDATESEC_MAX , 0 , 1));
+
+
+	osc_queu_MSG_float(String("/dht/stats/maxTemp"), float(dht_get_temp_stage0_Max()));
+	osc_queu_MSG_float(String("/dht/stats/minTemp"), float(dht_get_temp_stage0_Min()));
+	osc_queu_MSG_float(String("/dht/stats/avgTemp"), float(dht_get_temp_stage0_Avg()));
+	osc_queu_MSG_float(String("/dht/stats/lastTemp"), float(dht_sensor[sensor_nr].temp));
+
+	osc_queu_MSG_float(String("/dht/stats/humMin"), float(dht_get_humid_stage0_Min()));
+	osc_queu_MSG_float(String("/dht/stats/humMax"), float(dht_get_humid_stage0_Max()));
+	osc_queu_MSG_float(String("/dht/stats/humAvg"), float(dht_get_humid_stage0_Avg()));
+	osc_queu_MSG_float(String("/dht/stats/humLast"), float(dht_sensor[sensor_nr].humidity));
+
+
+
+
+
+	osc_send_out_float_MSG_buffer();   // send out some of it and yield
+	yield();
+
+
+
+
+}
+
+
+
+
+void osc_dht_fader_rec(OSCMessage &msg, int addrOffset)
+{
+	// OSC MESSAGE :/form/FA:/?   
+
+	String select_mode_string;		// Fader NR
+	String select_strip_addr;		// form NR
+									//String select_bit_string;
+	char address[3];
+	char address_out[20];
+	bool switch_bool = false;
+	uint8_t z = 0;						// form NR in uint8_t
+	String outbuffer = "/dht/update";
+	float outvalue;
+
+	msg.getAddress(address, addrOffset + 1, 2);
+	
+
+
+	if (address[0] == 'm' && address[1] == 't')
+	{
+
+		dht_sensor[0].mintemp  = mapfloat(msg.getFloat(0) , 0,1,  DHT_MINTEMP_MIN, DHT_MINTEMP_MAX );
+		
+		outbuffer = String("/dht/t_min");
+		outvalue = float(dht_sensor[0].mintemp);
+		osc_queu_MSG_float(String("/dht/t_off"), float(dht_sensor[0].mintemp - dht_sensor[0].tempDiff));
+	}
+	if (address[0] == 'm' && address[1] == 'h')
+	{
+
+		dht_sensor[0].minHumid = mapfloat(msg.getFloat(0), 0, 1, DHT_MINHUMID_MIN, DHT_MINHUMID_MAX);
+
+		outbuffer = String("/dht/h_min");
+		outvalue = float(dht_sensor[0].minHumid);
+		osc_queu_MSG_float(String("/dht/h_off"), float(dht_sensor[0].minHumid - dht_sensor[0].HumiDiff));
+	}
+
+	if (address[0] == 'o' && address[1] == 't')
+	{
+
+		dht_sensor[0].tempDiff = mapfloat(msg.getFloat(0), 0, 1, DHT_TEMPDIF_MIN, DHT_TEMPDIF_MAX);
+
+		outbuffer = String("/dht/t_off");
+		outvalue = float(dht_sensor[0].mintemp - dht_sensor[0].tempDiff);
+	}
+	if (address[0] == 'o' && address[1] == 'h')
+	{
+
+		dht_sensor[0].HumiDiff = mapfloat(msg.getFloat(0), 0, 1, DHT_HUMDIDDIFF_MIN, DHT_HUMDIDDIFF_MAX);
+
+		outbuffer = String("/dht/h_off");
+		outvalue = float(dht_sensor[0].minHumid - dht_sensor[0].HumiDiff);
+	}
+
+	if (address[0] == 'u' && address[1] == 'p')
+	{
+
+		dht_sensor[0].update_sec = mapfloat(msg.getFloat(0), 0, 1, DHT_UPDATESEC_MIN, DHT_UPDATESEC_MAX);
+
+		outbuffer = String("/dht/update");
+		outvalue = float(dht_sensor[0].update_sec);
+	}
+	{
+		//outbuffer = String("/dht" + outAddr );
+		osc_queu_MSG_float(outbuffer, outvalue);
+	}
+
+
+}
+
+
+
+void osc_dht_routing(OSCMessage &msg, int addrOffset)
+{	// routing of Device settings OSC messages
+
+	char address[10];
+	msg.getAddress(address);
+	//debugMe(String(address));
+
+
+	// OSC MESSAGE :/dht
+	if (msg.fullMatch("/ref", addrOffset) && bool(msg.getFloat(0)) == true)		osc_dht_refresh(0);
+
+
+	if (msg.fullMatch("/save", addrOffset))		FS_dht_write(0);
+
+	
+	msg.route("/fader", osc_dht_fader_rec, addrOffset);
+
+
+	//debugMe("DS routing END");
+}
+
+
 
 
 // Main OSC loop
@@ -1571,6 +1737,7 @@ void OSC_loop()
 			//oscMSG.route("/m", osc_master_routing);
 			oscMSG.route("/DS", osc_device_settings_routing);
 			oscMSG.route("/relay", osc_relay_routing);
+			oscMSG.route("/dht", osc_dht_routing);
 			//oscMSG.route("/multipl", osc_multipl_rec);
 			
 			// if (oscMSG.fullMatch("/FULL_REF", 0) && bool(oscMSG.getFloat(0)) == true) osc_send_all();

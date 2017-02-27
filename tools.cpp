@@ -4,7 +4,7 @@
 
 #include "tools.h"
 
-#include "leds.h"
+//#include "leds.h"
 
 
 // Global Bool Structure soi that we only use 1 Bit and not a byte for a Bool
@@ -14,12 +14,16 @@
 uint8_t global_options[NR_GLOBAL_OPTIONS_BYTES] = { B00001111, B00000000 };
 
 extern boolean FS_Bools_read(uint8_t conf_nr);
-extern led_cfg_struct led_cfg;
-
 
 //
 //	Functions
 //
+
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 
 boolean get_bool(uint8_t bit_nr)
 {
@@ -56,7 +60,7 @@ void load_bool()
 
 	if (FS_Bools_read(0) == false)
 	{
-		led_cfg.ledType = DEF_LED_TYPE;
+		
 		write_bool(DEBUG_OUT, DEF_DEBUG_OUT);
 		write_bool(OTA_SERVER, DEF_OTA_SERVER);
 		write_bool(STATIC_IP_ENABLED, DEF_STATIC_IP_ENABLED);
