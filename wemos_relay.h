@@ -3,7 +3,7 @@
 #ifndef _WEMOS_RELAY_h
 #define _WEMOS_RELAY_h
 
-#ifndef RELAY_BOARD
+
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -34,14 +34,10 @@ struct relay_cfg_struct
 
 enum RELAY_ENUM
 {
-	RELAY_PIN = 0		// Debug to Serial ?
+	RELAY_PIN = 0		// 
 	, RELAY_STATE = 1 	// True = ON, False = OF
 };
 
-
-
-
-#endif
 
 
 

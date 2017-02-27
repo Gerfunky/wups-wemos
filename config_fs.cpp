@@ -354,13 +354,16 @@ void	FS_dht_write(uint8_t conf_nr)
 	else  // it opens
 	{
 		conf_file.println("Main DHT Config for ESP.");
-		conf_file.println("D = DHT: type : pin: mintemp : temp dif : min Humidity : Himidity diff  ");
+		conf_file.println("D = DHT: type (11,22): pin (def=2): mintemp (3:40) : temp dif (1:40): min Humidity(10:90) : Himidity diff (0:50): Update every x Seconds (2:3600) : relayNo (0:7)");
 		conf_file.print(String("[D:" + String(dht_sensor[0].type)));
-		conf_file.print(String(":" + String(dht_sensor[0].pin)));
-		conf_file.print(String(":" + String(dht_sensor[0].mintemp)));		// Wifi
-		conf_file.print(String(":" + String(dht_sensor[0].tempDiff)));
-		conf_file.print(String(":" + String(dht_sensor[0].minHumid)));
-		conf_file.print(String(":" + String(dht_sensor[0].HumiDiff)));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].pin,1,16))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].relay_no, 0, 7))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].mintemp, DHT_MINTEMP_MIN , DHT_MINTEMP_MAX))));		// Wifi
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].tempDiff, DHT_TEMPDIF_MIN, DHT_TEMPDIF_MAX))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].minHumid, DHT_MINHUMID_MIN, DHT_MINHUMID_MAX))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].HumiDiff, DHT_HUMDIDDIFF_MIN, DHT_HUMDIDDIFF_MAX))));
+		conf_file.print(String(":" + String(constrain(dht_sensor[0].update_sec, DHT_UPDATESEC_MIN, DHT_UPDATESEC_MAX))));
+		
 
 		conf_file.println("] ");
 		conf_file.close();
@@ -403,12 +406,13 @@ boolean FS_dht_read(uint8_t conf_nr = 0)
 				debugMe("DHT READ");
 				dht_sensor[0].type = get_int_conf_value(conf_file, &character);
 				dht_sensor[0].pin = get_int_conf_value(conf_file, &character);
+				dht_sensor[0].relay_no = get_int_conf_value(conf_file, &character);
 				dht_sensor[0].mintemp = get_int_conf_value(conf_file, &character);
 				dht_sensor[0].tempDiff = get_int_conf_value(conf_file, &character);
 				dht_sensor[0].minHumid = get_int_conf_value(conf_file, &character);
 				dht_sensor[0].HumiDiff = get_int_conf_value(conf_file, &character);
-
-
+				dht_sensor[0].update_sec = get_int_conf_value(conf_file, &character);
+				
 
 				while ((conf_file.available()) && (character != ']')) character = conf_file.read();   // goto End				
 			}
@@ -421,7 +425,7 @@ boolean FS_dht_read(uint8_t conf_nr = 0)
 	}	// end open conf file
 	else
 	{
-		FS_dht_write(conf_nr);
+		//FS_dht_write(conf_nr);
 		debugMe("error opening " + addr);
 
 	}

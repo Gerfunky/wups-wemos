@@ -19,6 +19,12 @@ extern boolean FS_Bools_read(uint8_t conf_nr);
 //	Functions
 //
 
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+
 boolean get_bool(uint8_t bit_nr)
 {
 	boolean return_bool = 0;

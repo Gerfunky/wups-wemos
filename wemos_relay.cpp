@@ -4,7 +4,12 @@
 
 #include "wemos_relay.h"
 
-#ifndef RELAY_BOARD
+
+extern void debugMe(String input, boolean line = true);
+extern void debugMe(float input, boolean line = true);
+extern void debugMe(uint8_t input, boolean line = true);
+extern void debugMe(int input, boolean line = true);
+
 
 relay_cfg_struct relay[NR_OF_RELAYS] = {
 		{ DEF_RELAY_PIN_0  , false}
@@ -21,18 +26,11 @@ relay_cfg_struct relay[NR_OF_RELAYS] = {
 		};  */
 
 
-void relay_setup()
-{
-	for (uint8_t i = 0; i < NR_OF_RELAYS; i++)
-	{
-		pinMode(relay[i].pin, OUTPUT);
-		//digitalWrite(relay[i].pin, LOW);			// set all relays to off at boot
-	}
 
-}
 
-void relay_set(uint8_t relay_nr, bool state)
+void relay_set(uint8_t relay_nr, bool state)		// true  = on  false = off
 {
+	debugMe("setting relay");
 	if (relay_nr < NR_OF_RELAYS && relay_nr >= 0)
 	{
 		relay[relay_nr].state = state;
@@ -51,4 +49,16 @@ void relay_set_all(boolean state)
 
 }
 
-#endif
+
+
+void relay_setup()
+{
+	for (uint8_t i = 0; i < NR_OF_RELAYS; i++)
+	{
+		pinMode(relay[i].pin, OUTPUT);
+		relay_set(i, false);						// switch off all relays at start
+													//digitalWrite(relay[i].pin, LOW);			// set all relays to off at boot
+	}
+
+}
+

@@ -39,12 +39,16 @@
 		extern void write_bool(uint8_t bit_nr, boolean value);
 
 
-#ifdef RELAY_BOARD
+		// from dht_mos.capp
+		extern uint16_t dht_get_sensor_timeout(uint8_t sensor_nr);
+
+
+
 		// from relay.cpp
 		extern void relay_setup();
 		extern void relay_set(uint8_t relay_nr, bool state);
 		extern void relay_set_all(boolean state);
-#endif
+
 		unsigned long update_time = 0;
 
 		// from dht
@@ -73,8 +77,9 @@ void setup()
 
 	wifi_setup();
 
-
-	//relay_setup();
+#ifdef RELAY_BOARD
+	relay_setup();
+#endif
 	dht_setup();
 	//setup_comms(DEF_BOOT_DEBUGING, DEF_SERIAL_SPEED);   // Start CMDmessanger and the Serial if DEF_BOOT_DEBUGING == false
 	debugMe("DONE Setup");
@@ -82,7 +87,7 @@ void setup()
 
 }
 
-bool rel_state = true;
+//bool rel_state = true;
 
 void loop() 
 {
@@ -92,9 +97,10 @@ void loop()
 	if (millis() >= update_time )
 	{
 		
-		update_time = millis() + 5000;
+		update_time = millis() +  (dht_get_sensor_timeout(0) * 1000);
 		
 		dht_run();
+
 
 		//relay_set( 1, rel_state);
 		//Serial.println("Doit Baby");

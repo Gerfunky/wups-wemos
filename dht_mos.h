@@ -21,6 +21,9 @@ struct dht_sensor_strucht
 	uint8_t HumiDiff;	// how much lower is the humidity alloed to fall before switching off
 	uint8_t minHumid;
 	uint8_t tempDiff;
+	uint16_t totalErrors;
+	uint16_t errors;
+	uint16_t update_sec;	// how many seconds to wait between each update
 
 	
 	//String name; // name it
@@ -41,6 +44,22 @@ struct dht_sensor_strucht
 #define DHT_DEF_HUM_DIFF 10
 #define DHT_DEF_MIN_HUMID 60
 #define DHT_DEF_TEMP_DIFF 1
+#define DHT_DEF_UPDATE_SEC 10
+
+#define DHT_MINTEMP_MIN 3
+#define DHT_MINTEMP_MAX 40
+
+#define DHT_TEMPDIF_MIN 1
+#define DHT_TEMPDIF_MAX 20
+
+#define DHT_MINHUMID_MIN 10
+#define DHT_MINHUMID_MAX 90
+
+#define DHT_HUMDIDDIFF_MIN 5
+#define DHT_HUMDIDDIFF_MAX 30
+
+#define DHT_UPDATESEC_MIN 2
+#define DHT_UPDATESEC_MAX 360
 
 #endif
 
