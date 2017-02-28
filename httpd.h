@@ -9,6 +9,9 @@
 	#include "WProgram.h"
 #endif
 
+#define HTTPD_ACCESS_USERNAME "admin"
+#define HTTPD_ACCESS_PASSWORD "love"
+
 	
 
 #endif

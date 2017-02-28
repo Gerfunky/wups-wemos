@@ -37,9 +37,19 @@ extern void LEDS_setLED_show(uint8_t ledNr, uint8_t color[3]);
 
 //extern boolean conf_fs_r_wifi();
 
+// extern dht
+extern float dht_get_temp_stage0_Min();
+extern float dht_get_temp_stage0_Avg();
+extern float dht_get_temp_stage0_Max();
+extern float dht_get_humid_stage0_Max();
+extern float dht_get_humid_stage0_Min();
+extern float dht_get_humid_stage0_Avg();
+
+
 //#define DBG_OUT		if (get_bool(DEBUG_OUT) == true) Serial
 //#define DBG_OUTL	Serial
 RemoteDebug TelnetDebug;
+
 // add the Debug functions   --     send to debug MSG to Serial or telnet --- Line == true  add a CR at the end.
 //void debugMe(String input, boolean line = true);
 //void debugMe(float input, boolean line = true);
@@ -57,7 +67,7 @@ wifi_automation wifi_auto = { WIFI_IP_MASTER };
 #define NTP_LOCAL_PORT	2843	// 2 Invinity 4 Ever
 //the ntp deamon
 WiFiUDP ntp_udp;
-
+time_t reset_time;
 
 // FFT data 
 WiFiUDP  wifi_auto_server;
@@ -81,8 +91,13 @@ extern void http_loop();
 extern void OSC_setup();
 extern void OSC_loop();
 
-
-
+String ntp_get_resettime()
+{
+	String resettime = String(String(hour(reset_time)) + ":" + String(minute(reset_time)) + ":" + String(second(reset_time)) + "    " + String(day(reset_time)) + "." + String(month(reset_time)) + "." + String(year(reset_time)));
+	//debugMe(resettime);
+	//debugMe("****");
+	return resettime;
+}
 //debugging
 // debugging functions 
 // can take String, float, uint8_t, int and IPAddress 
@@ -92,7 +107,7 @@ void debugMe(String input,boolean line = true)
 {
 	//debugMe(input);
 
-	if ((TelnetDebug.ative(TelnetDebug.VERBOSE)) && get_bool(DEBUG_TELNET) )
+	if ((TelnetDebug.isActive(TelnetDebug.INFO)) && get_bool(DEBUG_TELNET) )
 	{
 		if (line == true)
 			TelnetDebug.println(input);
@@ -109,13 +124,14 @@ void debugMe(String input,boolean line = true)
 	}
 
 
+
 }
 
 void debugMe(float input, boolean line = true)
 {
 	//debugMe(input);
 
-	if ((TelnetDebug.ative(TelnetDebug.VERBOSE)) && get_bool(DEBUG_TELNET) )
+	if ((TelnetDebug.isActive(TelnetDebug.INFO)) && get_bool(DEBUG_TELNET) )
 	{
 		if (line == true)
 			TelnetDebug.println(String(input));
@@ -131,13 +147,15 @@ void debugMe(float input, boolean line = true)
 		else
 			Serial.print(String(input));
 	}
+
+
 }
 
 void debugMe(uint8_t input, boolean line = true)
 {
 	//debugMe(input);
 
-	if ((TelnetDebug.ative(TelnetDebug.VERBOSE)) && get_bool(DEBUG_TELNET))
+	if ((TelnetDebug.isActive(TelnetDebug.INFO)) && get_bool(DEBUG_TELNET))
 	{
 		if (line == true)
 			TelnetDebug.println(String(input));
@@ -159,7 +177,7 @@ void debugMe(int input, boolean line = true)
 {
 	//debugMe(input);
 
-	if ((TelnetDebug.ative(TelnetDebug.VERBOSE)) && get_bool(DEBUG_TELNET))
+	if ((TelnetDebug.isActive(TelnetDebug.INFO)) && get_bool(DEBUG_TELNET))
 	{
 		if (line == true)
 			TelnetDebug.println(String(input));
@@ -181,7 +199,7 @@ void debugMe(IPAddress input, boolean line = true)
 {
 	//debugMe(input);
 
-	if ((TelnetDebug.ative(TelnetDebug.VERBOSE)) && get_bool(DEBUG_TELNET))
+	if ((TelnetDebug.isActive(TelnetDebug.INFO)) && get_bool(DEBUG_TELNET))
 	{
 		if (line == true)
 			TelnetDebug.println(input);
@@ -198,6 +216,79 @@ void debugMe(IPAddress input, boolean line = true)
 	}
 
 }
+
+
+
+
+
+String NTPprintTime() {
+	// digital clock display of the time
+	// print the time
+	if (get_bool(DEBUG_OUT) == true)
+	{
+		debugMe("   *** ", false);
+		debugMe(hour(), false);
+		debugMe(":", false);
+		debugMe(minute(), false);
+		debugMe(":", false);
+		debugMe(second(), false);
+		debugMe(" ", false);
+		debugMe(day(), false);
+		debugMe(".", false);
+		debugMe(month(), false);
+		debugMe(".", false);
+		debugMe(year(), false);
+		debugMe("  ***");
+		//debugMe();
+	}
+}
+
+
+void debug_processCmdRemoteDebug() {
+
+	String lastCmd = TelnetDebug.getLastCommand();
+
+	if (lastCmd == "r") {
+
+
+
+		if (TelnetDebug.isActive(TelnetDebug.INFO))
+		{
+			TelnetDebug.print("Last Reset : ");
+			TelnetDebug.println(ntp_get_resettime());
+			TelnetDebug.print("Now : ");
+			NTPprintTime();
+			
+		}
+
+
+	}
+
+	if (lastCmd == "s") {
+
+		if (TelnetDebug.isActive(TelnetDebug.INFO))
+		{
+			TelnetDebug.print("  TEMP Min : ");
+			TelnetDebug.print(dht_get_temp_stage0_Min());
+			TelnetDebug.print("  MAX : ");
+			TelnetDebug.print(dht_get_temp_stage0_Max());
+			TelnetDebug.print("  AVG : ");
+			TelnetDebug.println(dht_get_temp_stage0_Avg());
+			TelnetDebug.print(" Humid Min : ");
+			TelnetDebug.print(dht_get_humid_stage0_Min());
+			TelnetDebug.print("  MAX : ");
+			TelnetDebug.print(dht_get_humid_stage0_Max());
+			TelnetDebug.print("  AVG : ");
+			TelnetDebug.println(dht_get_humid_stage0_Avg());
+			TelnetDebug.println("****");
+
+		}
+
+
+	}
+
+}
+
 
 
 
@@ -237,27 +328,6 @@ void setup_OTA()
 
 
 
-String NTPprintTime() {
-	// digital clock display of the time
-	// print the time
-	if (get_bool(DEBUG_OUT) == true)
-	{	
-		debugMe("***************  ", false);
-		debugMe(hour(),false);
-		debugMe(":", false);
-		debugMe(minute(), false);
-		debugMe(":", false);
-		debugMe(second(), false);
-		debugMe(" ", false);
-		debugMe(day(), false);
-		debugMe(".", false);
-		debugMe(month(), false);
-		debugMe(".", false);
-		debugMe(year(), false);
-		debugMe("  ***************");
-		//debugMe();
-	}
-}
 
 
 void NTP_requestTime(IPAddress& address)		// taken from the arduino NTP example
@@ -332,11 +402,12 @@ void setup_NTP()
 	}
 	
 	NTPprintTime();
+	reset_time = now(); 
+	ntp_get_resettime();
 	//if (year() == 1970 && get_bool(WIFI_MODE) == 1 && get_bool(DEBUG_OUT) == true) {debugMe("******wifi client no connect no time resetting *****");ESP.restart();}
 
 	
 }
-
 
 
 
@@ -694,7 +765,12 @@ void wifi_setup()
 	setup_NTP();
 
 
+
 	TelnetDebug.begin(wifi_cfg.APname);
+	TelnetDebug.setCallBackProjectCmds(&debug_processCmdRemoteDebug);
+	String dbg_helpCmd = "\n r - reset time \n";	
+	dbg_helpCmd.concat(" s - stats \n");
+	TelnetDebug.setHelpProjectsCmds(dbg_helpCmd);
 
 	debugMe("Hello World");
 

@@ -81,7 +81,7 @@ extern boolean FS_FFT_read(uint8_t conf_nr);
 	extern void debugMe(float input, boolean line = true);
 	extern void debugMe(uint8_t input, boolean line = true);
 	extern void debugMe(int input, boolean line = true);
-
+	extern String ntp_get_resettime();
 
 // from httpd
 extern void httpd_toggle_webserver();
@@ -194,7 +194,7 @@ void osc_queu_MSG_float(String addr_string, float value) {
 
 void osc_send_MSG_String(String addr_string, String value) {
 	char address_out[20];
-	char message[20];
+	char message[30];
 
 
 
@@ -208,6 +208,9 @@ void osc_send_MSG_String(String addr_string, String value) {
 	msg_out.send(osc_server);
 	osc_server.endPacket();
 	msg_out.empty();
+
+	//debugMe(addr_string);
+	//debugMe(value);
 
 
 }
@@ -1326,6 +1329,9 @@ void osc_DS_refresh()
 			osc_queu_MSG_float("/DS/OSC_M", float(get_bool(OSC_MC_SEND)));
 
 			
+			
+
+
 			osc_send_out_float_MSG_buffer();   // send out some of it and yield
 			yield();
 
@@ -1601,7 +1607,7 @@ void osc_dht_refresh(uint8_t sensor_nr = 0)
 	osc_queu_MSG_float(String("/dht/stats/humLast"), float(dht_sensor[sensor_nr].humidity));
 
 
-
+	osc_send_MSG_String(String("/dht/last_reset"), ntp_get_resettime());
 
 
 	osc_send_out_float_MSG_buffer();   // send out some of it and yield

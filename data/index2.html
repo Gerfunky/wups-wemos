@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <title>DHT Sensot</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Faster+One" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+
+      <header>
+
+      </header>
+
+      <section>
+
+      </section>
+
+    <script>
+	
+    var header = document.querySelector('header');
+    var section = document.querySelector('section');
+	
+    var requestURL = '/localdht.json';
+    var request = new XMLHttpRequest();
+    request.open('GET', requestURL);
+    request.responseType = 'text';
+    request.send();
+	
+    request.onload = function() {
+      var localdhttext = request.response;
+	  var localdht = JSON.parse(localdhttext);
+      populateHeader(localdht);
+      showHDHT(localdht);
+    }
+	
+    function populateHeader(jsonObj) {
+      var myH1 = document.createElement('h1');
+      myH1.textContent = jsonObj['APname'];
+      header.appendChild(myH1);
+	  
+      var myHPara1 = document.createElement('p');
+	  var myHPara2 = document.createElement('p');
+	  var myHPara3 = document.createElement('p');
+	  
+      myHPara1.textContent = 'Room: ' + jsonObj['location'] ;
+	  myHPara2.textContent = 'DHT read errors: ' + jsonObj['errors'] ;
+	  myHPara3.textContent = 'relay status : ' + jsonObj['relay'] ;
+	  
+      header.appendChild(myHPara1);
+	  header.appendChild(myHPara2);
+	  header.appendChild(myHPara3);
+    }
+	
+    function showHDHT(jsonObj) {
+      var dht = jsonObj['dht'];
+      for(i = 0; i < dht.length; i++) {
+        var myArticle = document.createElement('article');
+        var myH2 = document.createElement('h2');
+        var myPara1 = document.createElement('p');
+        var myPara2 = document.createElement('p');
+        var myPara3 = document.createElement('p');
+		var myPara4 = document.createElement('p');
+		var myPara5 = document.createElement('p');
+		var myPara6 = document.createElement('p');
+        var myList = document.createElement('ul');
+		
+        myH2.textContent = dht[i].name;
+        myPara1.textContent = 'Last: ' + dht[i].last;
+        myPara2.textContent = 'Avg: ' + dht[i].avg;
+        myPara3.textContent = 'Min:' + dht[i].min;
+		myPara4.textContent = 'Max:' + dht[i].max;
+		myPara5.textContent = 'On:' + dht[i].on;
+		myPara6.textContent = 'Off : ' + dht[i].off;
+		
+		
+        myArticle.appendChild(myH2);
+        myArticle.appendChild(myPara1);
+        myArticle.appendChild(myPara2);
+        myArticle.appendChild(myPara3);
+		myArticle.appendChild(myPara4);
+		myArticle.appendChild(myPara5);
+		myArticle.appendChild(myPara6);
+        section.appendChild(myArticle);
+      }
+    }
+    </script>
+  </body>
+</html>

@@ -354,7 +354,7 @@ void	FS_dht_write(uint8_t conf_nr)
 	else  // it opens
 	{
 		conf_file.println("Main DHT Config for ESP.");
-		conf_file.println("D = DHT: type (11,22): pin (def=2): mintemp (3:40) : temp dif (1:40): min Humidity(10:90) : Himidity diff (0:50): Update every x Seconds (2:3600) : relayNo (0:7)");
+		conf_file.println("D = DHT: type (11,22): pin (def=2) : relayNo (0:7) :  mintemp (3:40) : temp dif (1:40): min Humidity(10:90) : Himidity diff (0:50): Update every x Seconds (2:3600) : ");
 		conf_file.print(String("[D:" + String(dht_sensor[0].type)));
 		conf_file.print(String(":" + String(constrain(dht_sensor[0].pin,1,16))));
 		conf_file.print(String(":" + String(constrain(dht_sensor[0].relay_no, 0, 7))));
@@ -986,6 +986,7 @@ void FS_osc_delete_all_saves()
 		if (SPIFFS.exists("/conf/0.wifi.txt"))		SPIFFS.remove("/conf/0.wifi.txt");
 		if (SPIFFS.exists("/conf/0.Bool.txt"))		SPIFFS.remove("/conf/0.Bool.txt");
 		if (SPIFFS.exists("/conf/0.artnet.txt"))	SPIFFS.remove("/conf/0.artnet.txt");
+		if (SPIFFS.exists("/conf/0.dht.txt"))	SPIFFS.remove("/conf/0.dht.txt");
 
 		for (uint8_t play_mode_int = 0; play_mode_int < 16; play_mode_int++) 
 		{

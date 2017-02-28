@@ -47,6 +47,18 @@ extern void write_bool(uint8_t bit_nr, boolean value);
 // from config_fs.cpp
 extern void FS_wifi_write(uint8_t conf_nr);
 
+//from DHT.mos.cpp
+		#include "dht_mos.h"
+		extern dht_sensor_strucht dht_sensor[DHT_NR_SENSORS]; // , { false ,0,0,DHT_0_TYPE } };
+		extern float dht_get_temp_stage0_Min();
+		extern float dht_get_temp_stage0_Avg();
+		extern float dht_get_temp_stage0_Max();
+		extern float dht_get_humid_stage0_Max();
+		extern float dht_get_humid_stage0_Min();
+		extern float dht_get_humid_stage0_Avg();
+
+#include "wemos_relay.h"
+		extern relay_cfg_struct relay[NR_OF_RELAYS];
 
 
 // *********** External Variables 
@@ -60,7 +72,21 @@ File fsUploadFile;							// Variable to hold a file upload
 ESP8266HTTPUpdateServer httpUpdater;		// The HTTP update Server
 
 
+boolean httpd_is_authentified()
+{
+	if (!httpd.authenticate(HTTPD_ACCESS_USERNAME, HTTPD_ACCESS_PASSWORD))
+	{
+		httpd.sendHeader("Location", "/login");
+		httpd.sendHeader("Cache-Control", "no-cache");
+		httpd.send(301);
+		debugMe("Web Auth failed");
+		return false;
+	}
+	
+	debugMe("Web Auth OK");
+	return true;
 
+}
 
 
 String httpd_getContentType(String filename) {
@@ -77,14 +103,16 @@ String httpd_getContentType(String filename) {
 	else if (filename.endsWith(".pdf")) return "application/x-pdf";
 	else if (filename.endsWith(".zip")) return "application/x-zip";
 	else if (filename.endsWith(".gz")) return "application/x-gzip";
+	else if (filename.endsWith(".json")) return "text/json";
 	return "text/plain";
 }
 
 
 bool httpd_handleFileRead(String path) {
-
+	
 	 debugMe("handleFileRead: " + path);
-      
+	 if (!httpd_is_authentified()) return false;
+
 	if (path.endsWith("/")) path += "index.html";
 	String contentType = httpd_getContentType(path);
 	String pathWithGz = path + ".gz";
@@ -100,6 +128,7 @@ bool httpd_handleFileRead(String path) {
 }
 
 void httpd_handleFileUpload() {
+	if (!httpd_is_authentified()) return;
 	if (httpd.uri() != "/edit") return;
 	HTTPUpload& upload = httpd.upload();
 	if (upload.status == UPLOAD_FILE_START) {
@@ -131,6 +160,7 @@ void httpd_handleFileUpload() {
 
 
 void httpd_handleFileDelete() {
+	if (!httpd_is_authentified()) return;
 	if (httpd.args() == 0) return httpd.send(500, "text/plain", "BAD ARGS");
 	String path = httpd.arg(0);
 
@@ -147,6 +177,7 @@ void httpd_handleFileDelete() {
 }
 
 void httpd_handleFileCreate() {
+	if (!httpd_is_authentified()) return;
 	if (httpd.args() == 0)
 		return httpd.send(500, "text/plain", "BAD ARGS");
 	String path = httpd.arg(0);
@@ -167,6 +198,7 @@ void httpd_handleFileCreate() {
 }
 
 void httpd_handleFileList() {
+	if (!httpd_is_authentified()) return;
 	if (!httpd.hasArg("dir")) { httpd.send(500, "text/plain", "BAD ARGS"); return; }
 	String path = httpd.arg("dir");
  
@@ -195,7 +227,7 @@ void httpd_handleFileList() {
 
 void httpd_handle_default_args()
 {
-
+	if (!httpd_is_authentified()) return;
 	if (httpd.args() > 0)
 	{
     
@@ -247,16 +279,39 @@ void httpd_handle_default_args()
 		}
 
 		if (httpd.hasArg("delete")) {
+			// with http://172.16.222.40/index.html?delete=/conf/0.dht.txt
 			String path = httpd.arg("delete");
 
 			// path.toCharArray(ePassword,64);    
 			SPIFFS.remove(path);
 
-			debugMe("requested delte : ", false);
+			debugMe("requested delete : ", false);
 			debugMe(path);
 			
 
 		}
+
+		if (httpd.hasArg("tempMin")) {
+			// with http://172.16.222.40/index.html?tempMin=5
+			String tempMin_str = httpd.arg("tempMin");
+			uint8_t  tempMin = tempMin_str.toInt();
+			
+			dht_sensor[0].mintemp = constrain(tempMin, DHT_MINTEMP_MIN, DHT_MINTEMP_MAX);
+			debugMe("requested tempmin : ", false);
+			debugMe(tempMin);
+		}
+
+		if (httpd.hasArg("humidMin")) {
+			// with http://172.16.222.40/index.html?humidMin=60
+			String humidMin_str = httpd.arg("humidMin");
+			uint8_t  humidMin = humidMin_str.toInt();
+
+			dht_sensor[0].minHumid = constrain(humidMin, DHT_MINHUMID_MIN, DHT_MINHUMID_MAX);
+			debugMe("requested humid min : ", false);
+			debugMe(humidMin);
+		}
+
+
 	}
 
 }
@@ -264,15 +319,72 @@ void httpd_handle_default_args()
 
 void httpd_handleRequestSettings() 
 {
+	//if (!httpd_is_authentified()) return;
 	//String  output_bufferZ = "-" ;
 
-	httpd.on("/wifiMode", []() { httpd.send(200, "text/plain", String(get_bool(WIFI_MODE)));   });
-	httpd.on("/ssid", HTTP_GET, []() { httpd.send(200, "text/plain", wifi_cfg.ssid);  });
-	httpd.on("/password", HTTP_GET, []() { httpd.send(200, "text/plain", wifi_cfg.pwd);   });
-	httpd.on("/APname", HTTP_GET, []() { httpd.send(200, "text/plain", wifi_cfg.APname);   });
+	httpd.on("/wifiMode", []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(get_bool(WIFI_MODE)));   });
+	httpd.on("/ssid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", wifi_cfg.ssid);  });
+	httpd.on("/password", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", wifi_cfg.pwd);   });
+	httpd.on("/APname", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", wifi_cfg.APname);   });
+
+	httpd.on("/temp", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].temp));   });
+	httpd.on("/errors", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].totalErrors));   });
+	httpd.on("/humid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].humidity));   });
+	httpd.on("/tempMin", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].mintemp));   });
+	httpd.on("/humidMin", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].minHumid));   });
+	httpd.on("/tempOff", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].tempDiff));   });
+	httpd.on("/humidOff", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].HumiDiff));   });
+
+	httpd.on("/MAXtemp", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_temp_stage0_Max()));   });
+	httpd.on("/MINtemp", HTTP_GET, []() {if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_temp_stage0_Min()));   });
+	httpd.on("/AVGtemp", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_temp_stage0_Avg()));   });
+	httpd.on("/MAXhumid", HTTP_GET, []() {if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_humid_stage0_Max()));   });
+	httpd.on("/MINhumid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_humid_stage0_Min()));   });
+	httpd.on("/AVGhumid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_humid_stage0_Avg()));   });
+
+	httpd.on("/DHTups", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].update_sec));   });
 
 
 
+	httpd.on("/localdht.json", HTTP_GET, []() {
+		if (!httpd_is_authentified()) return;
+		String json = "{";
+			json += "\"APname\": \"" + String(wifi_cfg.APname)+ String("\"");
+			json += ", \"location\":\"" + String("Here") + String("\"");
+			json += ", \"errors\":" + String(dht_sensor[0].totalErrors);
+			json += ", \"relay\":";
+			if (relay[dht_sensor[0].relay_no].state == true)
+				json += "true";
+			else 		
+				json += "false";
+
+
+			json += " , \"dht\":";
+			json += "[";
+				json += "{";
+					json += "\"name\": \"Temp\"" ;
+					json += ", \"last\":" + String(dht_sensor[0].temp);
+					json += ", \"on\":" + String(dht_sensor[0].mintemp);
+					json += ", \"off\":" + String(dht_sensor[0].tempDiff);
+					json += ", \"avg\":" + String(dht_get_temp_stage0_Avg());
+					json += ", \"max\":" + String(dht_get_temp_stage0_Max());
+					json += ", \"min\":" + String(dht_get_temp_stage0_Max());
+				json += "},";
+				json += "{";
+					json += "\"name\": \"Humidity\"";
+					json += ", \"last\":" + String(dht_sensor[0].humidity);
+					json += ", \"on\":" + String(dht_sensor[0].minHumid);
+					json += ", \"off\":" + String(dht_sensor[0].HumiDiff);
+					json += ", \"avg\":" + String(dht_get_humid_stage0_Avg());
+					json += ", \"max\":" + String(dht_get_humid_stage0_Max());
+					json += ", \"min\":" + String(dht_get_humid_stage0_Min());
+				json += "}";
+			json += "]";
+
+		json += "}";
+		httpd.send(200, "text/json", json);
+		json = String();
+	});
 
 }
 
@@ -300,8 +412,25 @@ void httpd_toggle_webserver()
 }
 
 
+
+
 void httpd_setup()
 {
+	httpd.on("/", []()  { if (!httpd_is_authentified()) return; httpd_handleFileRead("/index2.html"); });
+
+	httpd.on("/login", []() {
+		if (!httpd.authenticate(HTTPD_ACCESS_USERNAME, HTTPD_ACCESS_PASSWORD))
+			return httpd.requestAuthentication();
+		httpd_handleFileRead("/index2.html");
+	});
+	
+	
+
+
+
+
+
+
 	// Setup Handlers
 	httpd.on("/list", HTTP_GET, httpd_handleFileList);
 	//load editor
@@ -313,6 +442,7 @@ void httpd_setup()
 
 	//get heap status, analog input value and all GPIO statuses in one json call
 	httpd.on("/all", HTTP_GET, []() {
+		if (!httpd_is_authentified()) return;
 		String json = "{";
 		json += "\"heap\":" + String(ESP.getFreeHeap());
 		json += ", \"analog\":" + String(analogRead(A0));
