@@ -1,100 +1,194 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html>
+  <head>
+    <meta charset="utf-8">
+	<meta http-equiv="refresh" content="10" >
+    <title>DHT Sensot</title>
 
-  <!-- Basic Page Needs
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta charset="utf-8">
-  <title>TinyPixelMapper</title>
-  <meta name="description" content="Portal">
-  <meta name="author" content="TinyPixelMapper">
+    <link href="https://fonts.googleapis.com/css?family=Faster+One" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+  </head>
 
-  <!-- Mobile Specific Metas
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <body>
 
-  <!-- FONT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <!--
-  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-  -->
-  
-  <!-- CSS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.mod.css">
-  <link rel="stylesheet" href="css/skeleton.min.css">
-  <!--  <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="css/dropdown.css"> -->
+      <header>
 
-
-  <!-- Favicon
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="icon" type="image/png" href="/images/favicon.png">
-
-</head>
-<body>
-
-	<script src="js/jquery-2.1.4.min.js"></script>
-
-  <!-- Primary Page Layout –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="band navigation">
-    <nav class="container primary">
-        <div class="sixteen columns">
-            <ul>
-                <li><a style="background: #33C3F0;" href="index.html">Home</a></li>
-                <li><a href="settings.html">Settings</a></li>
-                <li><a href="about.html">About</a></li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-
-  
-  <div class="section intro">
-    <div class="container">  	
-      <div class="row">
-      <h1 >Main Page</h1>
-      </div>
-      <div class="row" align="center">
-        
-          <h4 class="intro-heading">Fractal Control</h4>
-          		<form action="/index.html" method="post">
-				Play_mode <input type="text" name="play_mode" id="play_mode"><br>
-				<label for="bri">led_brightness</label>
-				<input type="range" name="bri" id="bri" value="200" min="0" max="255"><br>
-				<input type="submit" value="Submit">
-				</form>
-		  
-		 
-	
-	
-	
-	
+      </header>
+	  
+		<p align="center" >page auto refreshes ever 10 sec</p>
+		<p align="center" >need to sublit each seperatly and save at the end</p>
+	  <form action="/index.html" method="POST" id="set" align="center">
+		  	
+			<input type="hidden" name="DHTsave" id="DHTsave" value="1">
+    
+		    <input class="button button-primary" type="submit" value="Save" >
+		  </form>
 		
-		<script type="text/javascript">
+      <section>
+
+      </section>
+
+
+	  
+	  
+    <script>
+	
+    var header = document.querySelector('header');
+    var section = document.querySelector('section');
+	
+    var requestURL = '/localdht.json';
+    var request = new XMLHttpRequest();
+    request.open('GET', requestURL);
+    request.responseType = 'text';
+    request.send();
+	
+    request.onload = function() {
+      var localdhttext = request.response;
+	  var localdht = JSON.parse(localdhttext);
+      populateHeader(localdht);
+      showHDHT(localdht);
+    }
+	
+	
+	function validateForm() {
+		var x = document.forms["myForm"]["fname"].value;
+		if (x == "") {
+			alert("Name must be filled out");
+			return false;
+		}
+	}
+	
+    function populateHeader(jsonObj) {
+      var myH1 = document.createElement('h1');
+      myH1.textContent = jsonObj['APname'];
+      header.appendChild(myH1);
+	  
+      var myHPara1 = document.createElement('p');
+	  var myHPara2 = document.createElement('p');
+	  var myHPara3 = document.createElement('p');
+	  var myHPara4 = document.createElement('p');
+	  
+      myHPara1.textContent = 'Room: ' + jsonObj['location'] ;
+	  myHPara2.textContent = 'DHT read errors: ' + jsonObj['errors'] ;
+	  myHPara3.textContent = 'relay status : ' + jsonObj['relay'] ;
+	  myHPara4.textContent = 'Last reset (Sommer Zeit) : ' + jsonObj['rst'] ;
+	  
+	  var form = document.createElement("form");
+			form.setAttribute('method',"post");
+			form.setAttribute('action',"index.html");
+			form.setAttribute('align',"center");
 			
-			$.get('/play_mode', function (data) {
-				$("#play_mode").val(data);
-			});
-					
-			// Make sure that this only returns fake characters
-			$.get('/bri', function (data) {
-    			$("#bri").val(data);
-			});
-          
+	  var formLabelups = document.createElement("label")
+			formLabelups.textContent = 'read sensor every x Seconds :' ;
+			formLabelups.setAttribute('for', 'ups' );
+	  
+	  var formups = document.createElement("input"); //input element, text
+			
+			formups.setAttribute('type',"text");
+			formups.setAttribute('size',"2");
+			formups.setAttribute('name','ups');
+			formups.setAttribute('id','ups');
+			formups.setAttribute('value',jsonObj['ups']);
+	 
+	  var formSub = document.createElement("input"); //input element, Submit button
+			formSub.setAttribute('type',"submit");
+			formSub.setAttribute('value',"Submit");
 
-          </script>      
-		</div>
+			form.appendChild(formLabelups);
+			form.appendChild(formups);
+			
+			form.appendChild(formSub);
+	 
+	 
+      header.appendChild(myHPara1);
+	  header.appendChild(myHPara2);
+	  header.appendChild(myHPara3);
+	  header.appendChild(form);
+	  header.appendChild(myHPara4);
+    }
+	
+    function showHDHT(jsonObj) {
+      var dht = jsonObj['dht'];
+      for(i = 0; i < dht.length; i++) {
+	  
+			var myNL = document.createElement('p');
+			myNL.textContent = "\n";
+			
+			var form = document.createElement("form");
+			form.setAttribute('method',"post");
+			form.setAttribute('action',"index.html");
+			
+			
+			var formLabelOn = document.createElement("label")
+			formLabelOn.textContent = 'On:' ;
+			formLabelOn.setAttribute('for',dht[i].onName);
+			
+			var formLabelOff = document.createElement("label")
+			formLabelOff.setAttribute('for',dht[i].offName);
+			formLabelOff.textContent = 'Off:' ;
+			
+			
+			var formOn = document.createElement("input"); //input element, text
+			
+			formOn.setAttribute('type',"text");
+			formOn.setAttribute('size',"2");
+			formOn.setAttribute('name',dht[i].onName);
+			formOn.setAttribute('id',dht[i].onName);
+			formOn.setAttribute('value',dht[i].on);
+			
+			var formOff = document.createElement("input"); //input element, text
+			
+			formOff.setAttribute('type',"text");
+			formOff.setAttribute('size',"2");
+			formOff.setAttribute('name',dht[i].offName);
+			formOff.setAttribute('id',dht[i].offName);
+			formOff.setAttribute('value',dht[i].off);
+			
+			
+			var formSub = document.createElement("input"); //input element, Submit button
+			formSub.setAttribute('type',"submit");
+			formSub.setAttribute('value',"Submit");
+			
+			form.appendChild(formLabelOn);
+			form.appendChild(formOn);
+			
+			form.appendChild(formLabelOff);
+			form.appendChild(formOff);
+			
+			form.appendChild(formSub);
+	  
+	  
+        var myArticle = document.createElement('article');
+        var myH2 = document.createElement('h2');
+        var myPara1 = document.createElement('p');
+        var myPara2 = document.createElement('p');
+        var myPara3 = document.createElement('p');
+		var myPara4 = document.createElement('p');
+		var myPara5 = document.createElement('p');
+		var myPara6 = document.createElement('p');
+        //var myin1 = document.createElement('p');
 		
-      </div>
-    </div>
-  </div>
-  
-
-
-<!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-</body>
+        myH2.textContent = dht[i].name;
+        myPara1.textContent = 'Last: ' + dht[i].last;
+        myPara2.textContent = 'Avg: ' + dht[i].avg;
+        myPara3.textContent = 'Min:' + dht[i].min;
+		myPara4.textContent = 'Max:' + dht[i].max;
+		myPara5.textContent = 'On:' + dht[i].on;
+		myPara6.textContent = 'Off : ' + dht[i].off;
+		//myin1.textContent = document.forms["myForm"]["fname"] ;
+					
+		
+        myArticle.appendChild(myH2);
+        myArticle.appendChild(myPara1);
+        myArticle.appendChild(myPara2);
+        myArticle.appendChild(myPara3);
+		myArticle.appendChild(myPara4);
+		myArticle.appendChild(myPara5);
+		myArticle.appendChild(myPara6);
+		myArticle.appendChild(form);
+        section.appendChild(myArticle);
+      }
+    }
+    </script>
+  </body>
 </html>
