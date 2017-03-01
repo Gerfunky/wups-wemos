@@ -46,6 +46,7 @@ extern void write_bool(uint8_t bit_nr, boolean value);
 
 // from config_fs.cpp
 extern void FS_wifi_write(uint8_t conf_nr);
+extern void FS_dht_write(uint8_t conf_nr);
 
 //from DHT.mos.cpp
 		#include "dht_mos.h"
@@ -64,7 +65,7 @@ extern void FS_wifi_write(uint8_t conf_nr);
 // *********** External Variables 
 // from wifi-ota.cpp
 extern wifi_Struct wifi_cfg;
-
+extern String ntp_get_resettime();
 
 ESP8266WebServer httpd(80);					// The Web Server 
 File fsUploadFile;							// Variable to hold a file upload
@@ -83,7 +84,7 @@ boolean httpd_is_authentified()
 		return false;
 	}
 	
-	debugMe("Web Auth OK");
+	//debugMe("Web Auth OK");
 	return true;
 
 }
@@ -232,6 +233,9 @@ void httpd_handle_default_args()
 	{
     
 		 debugMe("set args present");
+		 debugMe(httpd.uri());
+		 debugMe(httpd.argName(0));
+
 
 		// set the brightness
 
@@ -311,7 +315,13 @@ void httpd_handle_default_args()
 			debugMe(humidMin);
 		}
 
-
+		if (httpd.hasArg("DHTsave")) {
+			
+			String tempMin_str = httpd.arg("DHTsave");
+			
+			debugMe("requested dhtsave : ", true);
+			FS_dht_write(0);
+		}
 	}
 
 }
@@ -321,6 +331,7 @@ void httpd_handleRequestSettings()
 {
 	//if (!httpd_is_authentified()) return;
 	//String  output_bufferZ = "-" ;
+	httpd.on("/reset", []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String("rebooting")); ESP.restart();    });
 
 	httpd.on("/wifiMode", []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(get_bool(WIFI_MODE)));   });
 	httpd.on("/ssid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", wifi_cfg.ssid);  });
@@ -342,8 +353,10 @@ void httpd_handleRequestSettings()
 	httpd.on("/MINhumid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_humid_stage0_Min()));   });
 	httpd.on("/AVGhumid", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_get_humid_stage0_Avg()));   });
 
+	
 	httpd.on("/DHTups", HTTP_GET, []() { if (!httpd_is_authentified()) return; httpd.send(200, "text/plain", String(dht_sensor[0].update_sec));   });
 
+	
 
 
 	httpd.on("/localdht.json", HTTP_GET, []() {
@@ -354,11 +367,12 @@ void httpd_handleRequestSettings()
 			json += ", \"errors\":" + String(dht_sensor[0].totalErrors);
 			json += ", \"relay\":";
 			if (relay[dht_sensor[0].relay_no].state == true)
-				json += "true";
+				json += "\"On\"";
 			else 		
-				json += "false";
+				json += "\"Off\"";
 
-
+			json += ", \"ups\":" + String(dht_sensor[0].update_sec);
+			json += ", \"rst\":\"" + String(ntp_get_resettime()) + String("\"");
 			json += " , \"dht\":";
 			json += "[";
 				json += "{";
@@ -368,7 +382,9 @@ void httpd_handleRequestSettings()
 					json += ", \"off\":" + String(dht_sensor[0].tempDiff);
 					json += ", \"avg\":" + String(dht_get_temp_stage0_Avg());
 					json += ", \"max\":" + String(dht_get_temp_stage0_Max());
-					json += ", \"min\":" + String(dht_get_temp_stage0_Max());
+					json += ", \"min\":" + String(dht_get_temp_stage0_Min());
+					json += ", \"onName\": \"tempMin\"";
+					json += ", \"offName\": \"tempOff\"";
 				json += "},";
 				json += "{";
 					json += "\"name\": \"Humidity\"";
@@ -378,6 +394,8 @@ void httpd_handleRequestSettings()
 					json += ", \"avg\":" + String(dht_get_humid_stage0_Avg());
 					json += ", \"max\":" + String(dht_get_humid_stage0_Max());
 					json += ", \"min\":" + String(dht_get_humid_stage0_Min());
+					json += ", \"onName\": \"humidMin\"";
+					json += ", \"offName\": \"humidOff\"";
 				json += "}";
 			json += "]";
 
@@ -416,12 +434,12 @@ void httpd_toggle_webserver()
 
 void httpd_setup()
 {
-	httpd.on("/", []()  { if (!httpd_is_authentified()) return; httpd_handleFileRead("/index2.html"); });
+	httpd.on("/", []()  { if (!httpd_is_authentified()) return; httpd_handleFileRead("/index.html"); });
 
 	httpd.on("/login", []() {
 		if (!httpd.authenticate(HTTPD_ACCESS_USERNAME, HTTPD_ACCESS_PASSWORD))
 			return httpd.requestAuthentication();
-		httpd_handleFileRead("/index2.html");
+		httpd_handleFileRead("/index.html");
 	});
 	
 	

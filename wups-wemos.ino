@@ -5,6 +5,7 @@
 
 */
 
+#include "sms_gw.h"
 #include "dht_mos.h"
 #include "wemos_relay.h"
 #include "Header.h"				// add the main Header file
@@ -54,6 +55,11 @@
 		// from dht
 		extern void dht_run();
 		extern void dht_setup();
+
+		// from sms_gw
+		extern void sms_gw_setup();
+		extern void sms_gw_run();
+
  
 void setup()
 {
@@ -77,13 +83,14 @@ void setup()
 
 	wifi_setup();
 
-#ifdef RELAY_BOARD
+
 	relay_setup();
-#endif
+
 	dht_setup();
 	//setup_comms(DEF_BOOT_DEBUGING, DEF_SERIAL_SPEED);   // Start CMDmessanger and the Serial if DEF_BOOT_DEBUGING == false
 	debugMe("DONE Setup");
 
+	sms_gw_setup();
 
 }
 
@@ -101,7 +108,10 @@ void loop()
 		
 		dht_run();
 
-
+		//relay_set_all(true);
+		//delay(1000);
+		//relay_set_all(false);
+		//delay(1000);
 		//relay_set( 1, rel_state);
 		//Serial.println("Doit Baby");
 		//Serial.println(rel_state);

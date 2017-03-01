@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-
+	<meta http-equiv="refresh" content="10" >
     <title>DHT Sensot</title>
 
     <link href="https://fonts.googleapis.com/css?family=Faster+One" rel="stylesheet">
@@ -14,11 +14,23 @@
       <header>
 
       </header>
-
+	  
+		<p align="center" >page auto refreshes ever 10 sec</p>
+		<p align="center" >need to sublit each seperatly and save at the end</p>
+	  <form action="/index.html" method="POST" id="set" align="center">
+		  	
+			<input type="hidden" name="DHTsave" id="DHTsave" value="1">
+    
+		    <input class="button button-primary" type="submit" value="Save" >
+		  </form>
+		
       <section>
 
       </section>
 
+
+	  
+	  
     <script>
 	
     var header = document.querySelector('header');
@@ -37,6 +49,15 @@
       showHDHT(localdht);
     }
 	
+	
+	function validateForm() {
+		var x = document.forms["myForm"]["fname"].value;
+		if (x == "") {
+			alert("Name must be filled out");
+			return false;
+		}
+	}
+	
     function populateHeader(jsonObj) {
       var myH1 = document.createElement('h1');
       myH1.textContent = jsonObj['APname'];
@@ -45,19 +66,98 @@
       var myHPara1 = document.createElement('p');
 	  var myHPara2 = document.createElement('p');
 	  var myHPara3 = document.createElement('p');
+	  var myHPara4 = document.createElement('p');
 	  
       myHPara1.textContent = 'Room: ' + jsonObj['location'] ;
 	  myHPara2.textContent = 'DHT read errors: ' + jsonObj['errors'] ;
 	  myHPara3.textContent = 'relay status : ' + jsonObj['relay'] ;
+	  myHPara4.textContent = 'Last reset (Sommer Zeit) : ' + jsonObj['rst'] ;
 	  
+	  var form = document.createElement("form");
+			form.setAttribute('method',"post");
+			form.setAttribute('action',"index.html");
+			form.setAttribute('align',"center");
+			
+	  var formLabelups = document.createElement("label")
+			formLabelups.textContent = 'read sensor every x Seconds :' ;
+			formLabelups.setAttribute('for', 'ups' );
+	  
+	  var formups = document.createElement("input"); //input element, text
+			
+			formups.setAttribute('type',"text");
+			formups.setAttribute('size',"2");
+			formups.setAttribute('name','ups');
+			formups.setAttribute('id','ups');
+			formups.setAttribute('value',jsonObj['ups']);
+	 
+	  var formSub = document.createElement("input"); //input element, Submit button
+			formSub.setAttribute('type',"submit");
+			formSub.setAttribute('value',"Submit");
+
+			form.appendChild(formLabelups);
+			form.appendChild(formups);
+			
+			form.appendChild(formSub);
+	 
+	 
       header.appendChild(myHPara1);
 	  header.appendChild(myHPara2);
 	  header.appendChild(myHPara3);
+	  header.appendChild(form);
+	  header.appendChild(myHPara4);
     }
 	
     function showHDHT(jsonObj) {
       var dht = jsonObj['dht'];
       for(i = 0; i < dht.length; i++) {
+	  
+			var myNL = document.createElement('p');
+			myNL.textContent = "\n";
+			
+			var form = document.createElement("form");
+			form.setAttribute('method',"post");
+			form.setAttribute('action',"index.html");
+			
+			
+			var formLabelOn = document.createElement("label")
+			formLabelOn.textContent = 'On:' ;
+			formLabelOn.setAttribute('for',dht[i].onName);
+			
+			var formLabelOff = document.createElement("label")
+			formLabelOff.setAttribute('for',dht[i].offName);
+			formLabelOff.textContent = 'Off:' ;
+			
+			
+			var formOn = document.createElement("input"); //input element, text
+			
+			formOn.setAttribute('type',"text");
+			formOn.setAttribute('size',"2");
+			formOn.setAttribute('name',dht[i].onName);
+			formOn.setAttribute('id',dht[i].onName);
+			formOn.setAttribute('value',dht[i].on);
+			
+			var formOff = document.createElement("input"); //input element, text
+			
+			formOff.setAttribute('type',"text");
+			formOff.setAttribute('size',"2");
+			formOff.setAttribute('name',dht[i].offName);
+			formOff.setAttribute('id',dht[i].offName);
+			formOff.setAttribute('value',dht[i].off);
+			
+			
+			var formSub = document.createElement("input"); //input element, Submit button
+			formSub.setAttribute('type',"submit");
+			formSub.setAttribute('value',"Submit");
+			
+			form.appendChild(formLabelOn);
+			form.appendChild(formOn);
+			
+			form.appendChild(formLabelOff);
+			form.appendChild(formOff);
+			
+			form.appendChild(formSub);
+	  
+	  
         var myArticle = document.createElement('article');
         var myH2 = document.createElement('h2');
         var myPara1 = document.createElement('p');
@@ -66,7 +166,7 @@
 		var myPara4 = document.createElement('p');
 		var myPara5 = document.createElement('p');
 		var myPara6 = document.createElement('p');
-        var myList = document.createElement('ul');
+        //var myin1 = document.createElement('p');
 		
         myH2.textContent = dht[i].name;
         myPara1.textContent = 'Last: ' + dht[i].last;
@@ -75,7 +175,8 @@
 		myPara4.textContent = 'Max:' + dht[i].max;
 		myPara5.textContent = 'On:' + dht[i].on;
 		myPara6.textContent = 'Off : ' + dht[i].off;
-		
+		//myin1.textContent = document.forms["myForm"]["fname"] ;
+					
 		
         myArticle.appendChild(myH2);
         myArticle.appendChild(myPara1);
@@ -84,6 +185,7 @@
 		myArticle.appendChild(myPara4);
 		myArticle.appendChild(myPara5);
 		myArticle.appendChild(myPara6);
+		myArticle.appendChild(form);
         section.appendChild(myArticle);
       }
     }

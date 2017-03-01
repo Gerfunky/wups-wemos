@@ -23,17 +23,23 @@ relay_cfg_struct relay[NR_OF_RELAYS] = {
 		{ DEF_RELAY_PIN_5  , false},
 		{ DEF_RELAY_PIN_6  , false},
 		{ DEF_RELAY_PIN_7  , false}
-		};  */
+		};  //*/
 
 
 
 
 void relay_set(uint8_t relay_nr, bool state)		// true  = on  false = off
 {
-	debugMe("setting relay");
+	//debugMe("relay : ",false);
+	debugMe(relay_nr, false);
+	//debugMe(relay[relay_nr].state);
+	debugMe("setting relay " , false);
+	debugMe(state);
 	if (relay_nr < NR_OF_RELAYS && relay_nr >= 0)
 	{
 		relay[relay_nr].state = state;
+		//debugMe(relay[relay_nr].state);
+
 		digitalWrite(relay[relay_nr].pin, relay[relay_nr].state);
 	}
 
@@ -46,7 +52,7 @@ void relay_set_all(boolean state)
 		
 		digitalWrite(relay[i].pin, state);
 	}
-
+	debugMe("set it baby");
 }
 
 

@@ -177,8 +177,10 @@ void dht_process_values(uint8_t sensorNR = 0)
 			// check the temp and humidity and switch off if below temp or humidity
 			if ((dht_temp_stage0.getAverage() <= dht_sensor[sensorNR].mintemp - dht_sensor[sensorNR].tempDiff) || dht_humidity_stage0.getAverage() < (dht_sensor[sensorNR].minHumid - dht_sensor[sensorNR].HumiDiff))
 			{
-				debugMe("relay off");
+				//debugMe("relay off");
+				//debugMe(relay[dht_sensor[sensorNR].relay_no].state);
 				relay_set(dht_sensor[sensorNR].relay_no, false);
+				//debugMe(relay[dht_sensor[sensorNR].relay_no].state);
 			}
 		}
 		else if (relay[dht_sensor[sensorNR].relay_no].state == false)  // relay is off 
