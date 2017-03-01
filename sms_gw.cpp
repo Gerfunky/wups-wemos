@@ -12,7 +12,7 @@
 void sms_gw_setup()
 {
 	// setup for sms
-
+ //hello test
 
 
 }
