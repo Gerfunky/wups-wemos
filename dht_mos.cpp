@@ -41,6 +41,8 @@ extern void debugMe(uint8_t input, boolean line = true);
 extern void debugMe(int input, boolean line = true);
 
 
+extern void mqtt_getAndSendTemperatureAndHumidityData();
+
 
 uint16_t dht_get_sensor_timeout(uint8_t sensor_nr = 0)
 {
@@ -140,11 +142,15 @@ void dht_get_sensor_value(uint8_t sensorNR = 0)
 
 		dht_sensor[sensorNR].temp = 255;
 		dht_sensor[sensorNR].humidity = 255;
+
+		
 	}
 	else				// sensor reading ok
 	{
 		dht_sensor[sensorNR].errors =0;
 		dht_sensor[sensorNR].readOk = true;
+
+		mqtt_getAndSendTemperatureAndHumidityData();
 
 		dht_temp_stage0.addValue(dht_sensor[sensorNR].temp);
 		dht_humidity_stage0.addValue(dht_sensor[sensorNR].humidity);

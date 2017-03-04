@@ -5,6 +5,7 @@
 
 */
 
+#include "thningsboard.h"
 #include "sms_gw.h"
 #include "dht_mos.h"
 #include "wemos_relay.h"
@@ -60,6 +61,9 @@
 		extern void sms_gw_setup();
 		extern void sms_gw_run();
 
+
+		extern void thingsboard_setup();
+		extern void thingsboard_loop();
  
 void setup()
 {
@@ -90,6 +94,7 @@ void setup()
 	//setup_comms(DEF_BOOT_DEBUGING, DEF_SERIAL_SPEED);   // Start CMDmessanger and the Serial if DEF_BOOT_DEBUGING == false
 	debugMe("DONE Setup");
 
+	thingsboard_setup();
 	sms_gw_setup();
 
 }
@@ -118,6 +123,6 @@ void loop()
 
 		
 	}  
-	
+	thingsboard_loop();
 	
 }
