@@ -49,6 +49,13 @@
 	extern dht_sensor_strucht dht_sensor[DHT_NR_SENSORS] ; // , { false ,0,0,DHT_0_TYPE } };
 
 
+#include "thningsboard.h"
+	extern thingsboard_Struct tboard;
+
+
+
+
+
 
 // ***************** External Structures
 	// from wifi-ota.cpp
@@ -340,6 +347,109 @@ void FS_FFT_write(uint8_t conf_nr)
 */
 
 
+
+void	FS_thingsboard_write(uint8_t conf_nr = 0)
+{
+	// write out the wifi config
+	String addr = String("/conf/" + String(conf_nr) + ".mqtt.txt");
+	//String title = "Main Config for ESP.";
+	File conf_file = SPIFFS.open(addr, "w");
+
+	if (!conf_file)
+	{
+		debugMe("Cant write mqtt Conf file");
+	}
+	else  // it opens
+	{
+		conf_file.println("Main MQTT Config for ESP.");
+		conf_file.println("Q: Token : ip : port : enabled: ");
+		conf_file.print(String("[Q:" + String(tboard.mqtt_token)));
+		conf_file.print(String(":" + String(tboard.ip_mqtt_server[0])));
+		conf_file.print(String("." + String(tboard.ip_mqtt_server[1])));
+		conf_file.print(String("." + String(tboard.ip_mqtt_server[2])));
+		conf_file.print(String("." + String(tboard.ip_mqtt_server[3])));
+		conf_file.print(String(":" + String(tboard.port_mqtt_server)));
+		conf_file.print(String(":" + String(tboard.enabled)));
+		conf_file.println("] ");
+		conf_file.close();
+
+		debugMe("DHT wrote conf");
+	}	// end open conf file
+
+
+}
+
+
+boolean FS_thingsboard_read(uint8_t conf_nr = 0)
+{
+	// read the dht config
+
+	String addr = String("/conf/" + String(conf_nr) + ".mqtt.txt");
+	File conf_file = SPIFFS.open(addr, "r");
+	delay(100);
+	if (conf_file)
+	{
+		debugMe("Loading mqtt conf " + addr);
+		char character;
+		//String settingName;
+		//String settingValue;
+		char type;
+
+
+		while (conf_file.available())
+		{
+			character = conf_file.read();
+
+			while ((conf_file.available()) && (character != '[')) {  // Go to first setting
+				character = conf_file.read();
+			}
+
+			type = conf_file.read();
+			character = conf_file.read(); // go past the first ":" after the type
+
+			String settingValue;
+			memset(tboard.mqtt_token, 0, sizeof(tboard.mqtt_token));
+
+
+			if (type = 'Q')
+			{
+				debugMe("MQTT READ");
+
+				settingValue = get_string_conf_value(conf_file, &character);
+				settingValue.toCharArray(tboard.mqtt_token, settingValue.length() + 1);
+
+				for (uint8_t i = 0; i < 4; i++) tboard.ip_mqtt_server[i] = get_IP_conf_value(conf_file, &character);
+
+				tboard.port_mqtt_server = get_int_conf_value(conf_file, &character);
+
+
+				tboard.enabled = get_bool_conf_value(conf_file, &character);
+				while ((conf_file.available()) && (character != ']')) character = conf_file.read();   // goto End				
+			}
+			//if (character == ']') {DBG_OUTPUT_PORT.println("the other side") ;}  // End of getting this strip
+			
+			
+			while ((conf_file.available())) character = conf_file.read();   // goto End
+
+		}
+		conf_file.close();
+		return true;
+	}	// end open conf file
+	else
+	{
+		//FS_dht_write(conf_nr);
+		debugMe("error opening " + addr);
+
+	} 
+	return false;
+}
+
+
+
+
+
+
+
 void	FS_dht_write(uint8_t conf_nr)
 {
 	// write out the wifi config
@@ -373,6 +483,7 @@ void	FS_dht_write(uint8_t conf_nr)
 
 
 }
+
 
 boolean FS_dht_read(uint8_t conf_nr = 0)
 {

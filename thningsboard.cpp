@@ -2,16 +2,35 @@
 // 
 // 
 
-#include "thningsboard.h"
+
+
+#ifdef _MSC_VER  
+#include <ESP8266WiFi\src\ESP8266WiFi.h>
+#include <arduino_589948\src\PubSubClient.h>
+#include <arduino_981649\ArduinoJson.h>
+
+#else
+#include <ESP8266WiFi.h>				// REquired for other libs
 #include <PubSubClient.h>
-#include <ESP8266WiFi.h>
+#include <ArduinoJson.h>		
+
+#endif
+
+
+#include "thningsboard.h"
+
 
 
 #define MQTT_TOKEN "8wGm3u263ss1y8dGHy61"
 #define THINGSBOARD_DHT_ALIAS "HomeMos"
 #define DEV_ID "c9b43e60-0086-11e7-bd27-63324ef75de3"
 #define THINGSBOARD_MQTT_PORT 1883
-#define DEF_IP_SERVER		{172,16,222,4}
+#define DEF_TB_IP_SERVER		{172,16,222,4}
+#define DEF_TB_PORT 1883
+#define DEF_TB_ENABLED true;
+
+thingsboard_Struct tboard;
+
 
 
 extern void debugMe(String input, boolean line = true);
@@ -31,11 +50,12 @@ extern float dht_get_humid_stage0_Min();
 extern float dht_get_humid_stage0_Avg();
 
 
+extern boolean FS_thingsboard_read(uint8_t conf_nr = 0);
+extern void	FS_thingsboard_write(uint8_t conf_nr = 0);
 
+extern String ntp_get_resettime();
 
-
-
-IPAddress thingsboard_server_ip = DEF_IP_SERVER; //"172.16.222.4";
+IPAddress thingsboard_server_ip = DEF_TB_IP_SERVER; //"172.16.222.4";
 
 
 WiFiClient wifiClient;
@@ -44,100 +64,118 @@ PubSubClient mqtt_client(wifiClient);
 int status = WL_IDLE_STATUS;
 unsigned long lastSend;
 
+#define MMQT_ATTRIBUTES_URL "v1/devices/me/attributes"
+#define MMQT_TELEMETRY_URL "v1/devices/me/telemetry"
 
-
-
-void mqtt_getAndSendTemperatureAndHumidityData()
+void mmqt_send_attributes()
 {
-	if (mqtt_client.connected())
+	if (tboard.enabled)
 	{
-		Serial.println("Collecting temperature data.");
+		// Prepare gpios JSON payload string
+		StaticJsonBuffer<200> jsonBuffer;
+		JsonObject& data = jsonBuffer.createObject();
 
-		// Reading temperature or humidity takes about 250 milliseconds!
-		float h = dht_sensor[0].humidity;
-		// Read temperature as Celsius (the default)
-		float t = dht_sensor[0].temp;
+		data["Name"] = "Hello_MOS";
+		data["Errors"] = dht_sensor[0].totalErrors;
+		data["LastReset"] = ntp_get_resettime();
+		
+		char payload[256];
+		data.printTo(payload, sizeof(payload));
+		String strPayload = String(payload);
+		Serial.print("Get attributes status: ");
+		Serial.println(strPayload);
+		//return strPayload;
 
-		// Check if any reads failed and exit early (to try again).
-	//	if (isnan(h) || isnan(t)) {
-		//Serial.println("Failed to read from DHT sensor!");
-		//return;
-		//}
+		mqtt_client.publish(MMQT_ATTRIBUTES_URL, strPayload.c_str());
+	}	
+}
 
+void mmqt_send_dht_temp()
+{
+	if (tboard.enabled)
+	{
+		StaticJsonBuffer<200> jsonBuffer;
+		JsonObject& data = jsonBuffer.createObject();
 
+		data["temperature"] = dht_sensor[0].temp;
+		data["max_temp"] = dht_get_temp_stage0_Max();
+		data["min_temp"] = dht_get_temp_stage0_Min();
+		data["Errors"] = dht_sensor[0].totalErrors;
+		char payload[256];
+		data.printTo(payload, sizeof(payload));
+		String strPayload = String(payload);
+		Serial.print("Get TELEMETRY temp: ");
+		Serial.println(strPayload);
 
-		String temperature = String(t);
-		String humidity = String(h);
-
-		/*
-		// Just debug messages
-		Serial.print("Sending temperature and humidity : [");
-		Serial.print(temperature); Serial.print(",");
-		Serial.print(humidity);
-		Serial.print("]   -> ");
-		*/
-		// Prepare a JSON payload string
-		String payload = "{";
-						payload += "\"temperature\":"; payload += temperature; 
-		//payload += ","; payload += "\"humidity\":"; payload += humidity; 
-		payload += ","; payload += "\"max_temp\":"; payload += String(dht_get_temp_stage0_Max()) ;  
-		payload += ","; payload += "\"min_temp\":"; payload += String(dht_get_temp_stage0_Min()); 
-		//payload += ","; payload += "\"max_humid\":"; payload += String(dht_get_humid_stage0_Max()); 
-		//payload += ","; payload += "\"min_humid\":"; payload += String(dht_get_humid_stage0_Min()); 
-		payload += ","; payload += "\"DHT_Errors\":"; payload += String(dht_sensor[0].totalErrors);
-						payload += "}";
-
-		// Send payload
-		char attributes[100];
-		payload.toCharArray(attributes, 100);
-		mqtt_client.publish("v1/devices/me/telemetry", attributes);
-
-
-		    payload = "{";
-		//payload += "\"temperature\":"; payload += temperature;
-					 payload += "\"humidity\":"; payload += humidity;
-		//payload += ","; payload += "\"max_temp\":"; payload += String(dht_get_temp_stage0_Max());
-		//payload += ","; payload += "\"min_temp\":"; payload += String(dht_get_temp_stage0_Min());
-		payload += ","; payload += "\"max_humid\":"; payload += String(dht_get_humid_stage0_Max());
-		payload += ","; payload += "\"min_humid\":"; payload += String(dht_get_humid_stage0_Min()); 
-		//payload += ","; payload += "\"DHT_Errors\":"; payload += String(dht_sensor[0].totalErrors);
-		payload += "}";
-
-		char attributes2[100];
-		payload.toCharArray(attributes2, 100);
-		mqtt_client.publish("v1/devices/me/telemetry", attributes2);
-
-		debugMe(attributes);
+		mqtt_client.publish(MMQT_TELEMETRY_URL, strPayload.c_str());
 	}
 }
 
+void mmqt_send_dht_humid()
+{
+	if (tboard.enabled)
+	{
+		StaticJsonBuffer<200> jsonBuffer;
+		JsonObject& data = jsonBuffer.createObject();
 
+		data["humidity"] = dht_sensor[0].humidity;
+		data["max_humid"] = dht_get_humid_stage0_Max();
+		data["min_humid"] = dht_get_humid_stage0_Min();
+		char payload[256];
+		data.printTo(payload, sizeof(payload));
+		String strPayload = String(payload);
+		Serial.print("Get TELEMETRY humid : ");
+		Serial.println(strPayload);
 
-
+		mqtt_client.publish(MMQT_TELEMETRY_URL, strPayload.c_str());
+	}
+}
 
 
 
 
 void thingsboard_connect()
 {
-	debugMe("Connecting to Thingsboard node ...");
-	// Attempt to connect (clientId, username, password)
-	if (mqtt_client.connect("Esp8266 Device", MQTT_TOKEN, NULL )) {
-		debugMe("[DONE]");
-	}
-	else {
-		debugMe("[FAILED] [ rc = ", false);
-		debugMe(mqtt_client.state(),false);
-		debugMe(" : retrying in 5 seconds]");
-		// Wait 5 seconds before retrying
-		delay(3000);
+	if (true == tboard.enabled)
+	{
+		debugMe("Connecting to Thingsboard node ...", false );
+		// Attempt to connect (clientId, username, password)
+		if (mqtt_client.connect("Esp8266 Device", tboard.mqtt_token, NULL)) {
+			debugMe("[DONE]");
+		}
+		else {
+			debugMe("[FAILED] [ rc = ", false);
+			debugMe(mqtt_client.state(), false);
+			debugMe(" : retrying in 5 seconds]");
+			// Wait 5 seconds before retrying
+			delay(3000);
+		}
 	}
 }
 
 
+
+
+
+
+
 void thingsboard_setup()
 {
-	mqtt_client.setServer(thingsboard_server_ip, THINGSBOARD_MQTT_PORT);
+
+	if (false == FS_thingsboard_read())
+	{
+		tboard.ip_mqtt_server = DEF_TB_IP_SERVER;
+		tboard.port_mqtt_server = DEF_TB_PORT;
+		tboard.enabled = DEF_TB_ENABLED;
+
+		String dev_mqqt_token = MQTT_TOKEN;
+
+		dev_mqqt_token.toCharArray(tboard.mqtt_token, dev_mqqt_token.length() + 1);
+
+		FS_thingsboard_write();
+
+	}
+	mqtt_client.setServer(tboard.ip_mqtt_server, tboard.port_mqtt_server);
 	thingsboard_connect();
 
 	
