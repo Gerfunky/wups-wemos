@@ -362,13 +362,14 @@ void	FS_thingsboard_write(uint8_t conf_nr = 0)
 	else  // it opens
 	{
 		conf_file.println("Main MQTT Config for ESP.");
-		conf_file.println("Q: Token : ip : port : enabled: ");
+		conf_file.println("Q: Token : ip : port : update ever x min : enabled: ");
 		conf_file.print(String("[Q:" + String(tboard.mqtt_token)));
 		conf_file.print(String(":" + String(tboard.ip_mqtt_server[0])));
 		conf_file.print(String("." + String(tboard.ip_mqtt_server[1])));
 		conf_file.print(String("." + String(tboard.ip_mqtt_server[2])));
 		conf_file.print(String("." + String(tboard.ip_mqtt_server[3])));
 		conf_file.print(String(":" + String(tboard.port_mqtt_server)));
+		conf_file.print(String(":" + String(tboard.updateMinTimeOut)));
 		conf_file.print(String(":" + String(tboard.enabled)));
 		conf_file.println("] ");
 		conf_file.close();
@@ -422,8 +423,9 @@ boolean FS_thingsboard_read(uint8_t conf_nr = 0)
 
 				tboard.port_mqtt_server = get_int_conf_value(conf_file, &character);
 
-
+				tboard.updateMinTimeOut = get_int_conf_value(conf_file, &character);
 				tboard.enabled = get_bool_conf_value(conf_file, &character);
+				
 				while ((conf_file.available()) && (character != ']')) character = conf_file.read();   // goto End				
 			}
 			//if (character == ']') {DBG_OUTPUT_PORT.println("the other side") ;}  // End of getting this strip

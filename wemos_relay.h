@@ -38,7 +38,12 @@ enum RELAY_ENUM
 	, RELAY_STATE = 1 	// True = ON, False = OF
 };
 
+enum RELAY_STATUS
+{
+	RELAY_OFF = 1
+	,RELAY_ON = 0
 
+};
 
 
 #endif

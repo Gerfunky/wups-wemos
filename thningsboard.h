@@ -17,6 +17,8 @@ struct thingsboard_Struct
 	IPAddress	ip_mqtt_server;				// What NTP server to use in IP 
 	uint16_t	port_mqtt_server;
 	boolean		enabled;
+	long		updateTime;
+	uint8_t		updateMinTimeOut;	// how many min sto wait to send again
 	
 };
 

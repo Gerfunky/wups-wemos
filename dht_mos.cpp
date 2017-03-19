@@ -41,11 +41,11 @@ extern void debugMe(uint8_t input, boolean line = true);
 extern void debugMe(int input, boolean line = true);
 
 
-extern void mqtt_getAndSendTemperatureAndHumidityData();
-extern void mmqt_send_attributes();
+//extern void mqtt_getAndSendTemperatureAndHumidityData();
+//extern void mmqt_send_attributes();
 //extern void mmqt_send_dht();
-extern void mmqt_send_dht_humid();
-extern void mmqt_send_dht_temp();
+//extern void mmqt_send_dht_humid();
+//extern void mmqt_send_dht_temp();
 
 
 
@@ -157,13 +157,13 @@ void dht_get_sensor_value(uint8_t sensorNR = 0)
 
 		//mqtt_getAndSendTemperatureAndHumidityData();
 		//mmqt_send_dht();
-		mmqt_send_dht_humid();
-		mmqt_send_dht_temp();
-		mmqt_send_attributes();
+
+		//mmqt_send_attributes();
 
 		dht_temp_stage0.addValue(dht_sensor[sensorNR].temp);
 		dht_humidity_stage0.addValue(dht_sensor[sensorNR].humidity);
 
+		
 
 		debugMe("| temp :", false); 
 		debugMe(dht_sensor[sensorNR].temp, false);

@@ -10,6 +10,8 @@ extern void debugMe(float input, boolean line = true);
 extern void debugMe(uint8_t input, boolean line = true);
 extern void debugMe(int input, boolean line = true);
 
+extern boolean mmqt_send_relay_status();
+
 
 relay_cfg_struct relay[NR_OF_RELAYS] = {
 		{ DEF_RELAY_PIN_0  , false}
@@ -40,8 +42,12 @@ void relay_set(uint8_t relay_nr, bool state)		// true  = on  false = off
 		relay[relay_nr].state = state;
 		//debugMe(relay[relay_nr].state);
 
-		digitalWrite(relay[relay_nr].pin, relay[relay_nr].state);
+		if (relay[relay_nr].state == true)
+			digitalWrite(relay[relay_nr].pin, RELAY_ON);
+		else 
+			digitalWrite(relay[relay_nr].pin, RELAY_OFF);
 	}
+	 mmqt_send_relay_status();
 
 }
 

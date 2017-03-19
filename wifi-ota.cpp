@@ -93,11 +93,21 @@ extern void OSC_loop();
 
 String ntp_get_resettime()
 {
-	String resettime = String(String(hour(reset_time)) + ":" + String(minute(reset_time)) + ":" + String(second(reset_time)) + "    " + String(day(reset_time)) + "." + String(month(reset_time)) + "." + String(year(reset_time)));
+	String resettime = String(String(hour(reset_time)) + ":" + String(minute(reset_time)) + ":" + String(second(reset_time)) + "  __  " + String(day(reset_time)) + "." + String(month(reset_time)) + "." + String(year(reset_time)));
 	//debugMe(resettime);
 	//debugMe("****");
 	return resettime;
 }
+
+String TimeNow()
+{
+	String now = String(String(hour()) + ":" + String(minute()) + ":" + String(second()) + "  __  " + String(day()) + "." + String(month()) + "." + String(year()));
+	//debugMe(resettime);
+	//debugMe("****");
+	return now;
+
+}
+
 //debugging
 // debugging functions 
 // can take String, float, uint8_t, int and IPAddress 
@@ -219,7 +229,16 @@ void debugMe(IPAddress input, boolean line = true)
 
 
 
+String get_ip_str()
+{
+	IPAddress NowIP;
 
+	NowIP = WiFi.localIP();
+
+	return String(String(NowIP[0]) + "." + String(NowIP[1]) + "." + String(NowIP[2]) + "." + String(NowIP[3]));
+
+
+}
 
 String NTPprintTime() {
 	// digital clock display of the time
@@ -788,6 +807,10 @@ void wifi_setup()
 // making shure that all ports are handeld and flushed.
 void wifi_loop()
 {
+	if (WiFi.status() != WL_CONNECTED) {
+		WiFi.reconnect(); debugMe("reconect wifi");
+	}// reconnect if not connected
+
 	ArduinoOTA.handle();	// Run the main OTA loop for Wifi updating
 	yield();
 	NTP_parse_response();	// get new packets and flush if not correct.
