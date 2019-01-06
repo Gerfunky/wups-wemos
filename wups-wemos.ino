@@ -7,6 +7,7 @@
 
 #include "thningsboard.h"
 #include "sms_gw.h"
+#include "Adafruit_Sensor.h"
 #include "dht_mos.h"
 #include "wemos_relay.h"
 #include "Header.h"				// add the main Header file

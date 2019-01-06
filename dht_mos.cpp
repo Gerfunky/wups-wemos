@@ -60,14 +60,14 @@ uint16_t dht_get_sensor_timeout(uint8_t sensor_nr = 0)
 
 float dht_get_temp_stage0_Max()
 {
-	if isnan(dht_temp_stage0.getMax())
+	if (isnan(dht_temp_stage0.getMax()))
 		return 255;
 	else return dht_temp_stage0.getMax();
 }
 
 float dht_get_temp_stage0_Min()
 {
-	if isnan(dht_temp_stage0.getMin())
+	if (isnan(dht_temp_stage0.getMin()))
 		return 255;
 	else
 	return dht_temp_stage0.getMin();
@@ -77,7 +77,7 @@ float dht_get_temp_stage0_Avg()
 {
 	double value = dht_temp_stage0.getAverage();
 
-	if isnan(value)
+	if (isnan(value))
 		return 255;
 	else
 	return value;
@@ -85,7 +85,7 @@ float dht_get_temp_stage0_Avg()
 
 float dht_get_humid_stage0_Max()
 {
-	if isnan(dht_humidity_stage0.getMax())
+	if (isnan(dht_humidity_stage0.getMax()))
 		return 255;
 	else
 	return dht_humidity_stage0.getMax();
@@ -93,7 +93,7 @@ float dht_get_humid_stage0_Max()
 
 float dht_get_humid_stage0_Min()
 {
-	if isnan(dht_humidity_stage0.getMin())
+	if (isnan(dht_humidity_stage0.getMin()))
 		return 255;
 	else
 	return dht_humidity_stage0.getMin();
@@ -102,7 +102,7 @@ float dht_get_humid_stage0_Min()
 float dht_get_humid_stage0_Avg()
 {
 	double value = dht_humidity_stage0.getAverage();
-	if isnan(value)
+	if (isnan(value))
 		return 255;
 	else return value;
 }

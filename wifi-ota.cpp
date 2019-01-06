@@ -2,23 +2,15 @@
 // 
 // 
 
-#ifdef _MSC_VER   
-	//#include <ESP8266WiFi\src\ESP8266WiFi.h> // neded to IPADDRESS typedef !!! TODO Replace with EXTERN!!!!
-	#include <ESP8266WiFi\src\WiFiClient.h>
-	#include <ArduinoOTA\ArduinoOTA.h>
-	#include <RemoteDebug\RemoteDebug.h>
-	#include <Artnet\Artnet.h>
-	#include <Time\TimeLib.h>
-	
-#else 
+
 	//#include <ESP8266WiFi.h>      // neded to IPADDRESS typedef !!! TODO Replace with EXTERN!!!!
 	#include <WiFiClient.h> 
 	#include <ArduinoOTA.h>
 
 	#include <RemoteDebug.h> 
-	#include <Artnet.h>
+	//#include <Artnet.h>
 	#include <TimeLib.h> 
-#endif
+
 
 
 
