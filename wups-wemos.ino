@@ -65,6 +65,12 @@
 
 		extern void thingsboard_setup();
 		extern void thingsboard_loop();
+
+
+		// MHZ19
+		extern void mhz19_setup();
+		extern void mhz19_loop();
+
  
 void setup()
 {
@@ -79,7 +85,7 @@ void setup()
 		//Serial.begin(DEF_SERIAL_SPEED);						// enable serial for debugging nand CMDmesanger if using local FFT from teensy
 		debugMe(ESP.getResetReason());
 		debugMe(ESP.getResetInfo());
-		debugMe("Starting Setup - Light Fractal");
+		debugMe("Starting Setup - Wups Wemos");
 	}
 
 	FS_setup_SPIFFS();  // includes loadbool()
@@ -97,6 +103,7 @@ void setup()
 
 	thingsboard_setup();
 	sms_gw_setup();
+	 mhz19_setup();
 
 }
 
@@ -113,7 +120,9 @@ void loop()
 		update_time = millis() +  (dht_get_sensor_timeout(0) * 1000);
 		
 		dht_run();
+		mhz19_loop();
 
+		
 		//relay_set_all(true);
 		//delay(1000);
 		//relay_set_all(false);
