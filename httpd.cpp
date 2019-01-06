@@ -18,10 +18,10 @@
 	#include <ESP8266HTTPUpdateServer\src\ESP8266HTTPUpdateServer.h>
 	#include <ESP8266mDNS\ESP8266mDNS.h>
 #else
-	#include <ESP8266WiFi.h>				// REquired for other libs
-	#include <ESP8266WebServer.h>			// the Webserver
-	#include <ESP8266HTTPUpdateServer.h>	// the HTTP update server http://IP/update
-	#include <ESP8266mDNS.h>				// mDNS 
+	#include <WiFi.h>				// REquired for other libs
+	#include <ESP8WebServer.h>			// the Webserver
+	#include <ESPHTTPUpdateServer.h>	// the HTTP update server http://IP/update
+	#include <ESPmDNS.h>				// mDNS 
 	
 #endif
 #include <FS.h>							// for file system  SPIFFS access
